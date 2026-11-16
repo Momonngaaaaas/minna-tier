@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>みんなでティア表</title>
+<meta name="theme-color" content="#15172b">
+<meta name="description" content="主役が作ったティア表の並び順を当てる、価値観パーティーゲーム。スマホのブラウザでみんなで遊べます。">
+<meta property="og:title" content="みんなでティア表">
+<meta property="og:description" content="主役のティア表の並び順を当てるパーティーゲーム。URLを開いて部屋番号を入れるだけ。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%2315172b'/><rect x='14' y='16' width='72' height='12' rx='4' fill='%23ff6b6b'/><rect x='14' y='32' width='72' height='12' rx='4' fill='%23ffa94d'/><rect x='14' y='48' width='72' height='12' rx='4' fill='%23ffd43b'/><rect x='14' y='64' width='72' height='12' rx='4' fill='%2369db7c'/><rect x='14' y='80' width='72' height='8' rx='4' fill='%234dabf7'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#15172b; --panel:#21243f; --panel2:#2b2f52; --line:#3a3f6b;
+    --text:#f4f5ff; --mute:#a3a8d1;
+    --S:#ff6b6b; --A:#ffa94d; --B:#ffd43b; --C:#69db7c; --D:#4dabf7;
+    --accent:#b197fc; --good:#51cf66; --near:#fcc419;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--text);
+    font-family:"M PLUS Rounded 1c",system-ui,-apple-system,"Hiragino Sans",sans-serif;
+    -webkit-user-select:none;user-select:none}
+  body{min-height:100vh;min-height:100dvh}
+  #app{max-width:480px;margin:0 auto;padding:16px 16px 40px;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
+  input{-webkit-user-select:text;user-select:text}
+  button{font-family:inherit;cursor:pointer;border:none;color:inherit}
+  h1,h2,h3,p{margin:0}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;min-height:36px}
+  .topbar .info{font-size:13px;color:var(--mute);font-weight:700}
+  .iconbtn{background:var(--panel);border-radius:10px;padding:8px 12px;font-size:14px;font-weight:700;color:var(--mute)}
+
+  .btn{display:block;width:100%;padding:16px;border-radius:16px;font-size:18px;font-weight:800;
+    background:var(--accent);color:#1a1240;box-shadow:0 4px 0 #7a5fd6;transition:transform .08s, box-shadow .08s}
+  .btn:active{transform:translateY(3px);box-shadow:0 1px 0 #7a5fd6}
+  .btn:disabled{background:#4a4e7a;color:#8a8fbf;box-shadow:0 4px 0 #34385e}
+  .btn.sub{background:var(--panel2);color:var(--text);box-shadow:0 4px 0 #1a1d36;font-size:16px;padding:14px}
+  .btn.sub:active{box-shadow:0 1px 0 #1a1d36}
+  .btn + .btn{margin-top:12px}
+  .row2{display:flex;gap:10px}
+  .row2 .btn{margin-top:0}
+
+  .card{background:var(--panel);border-radius:20px;padding:18px}
+  .grow{flex:1}
+  .center{text-align:center}
+  .mute{color:var(--mute)}
+  .small{font-size:13px}
+  .mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}.mt24{margin-top:24px}
+
+  /* title */
+  .logo{margin:28px 0 22px;text-align:center}
+  .logo .pre{font-size:20px;font-weight:800;color:var(--mute);letter-spacing:.2em}
+  .logo .main{font-size:46px;font-weight:800;line-height:1.1;margin-top:4px}
+  .stripes{display:flex;flex-direction:column;gap:6px;margin:22px auto 0;width:220px}
+  .stripe{display:flex;align-items:center;gap:8px}
+  .stripe b{width:38px;height:30px;border-radius:8px;display:grid;place-items:center;color:#1a1a2e;font-size:16px}
+  .stripe span{flex:1;height:30px;border-radius:8px;background:var(--panel2)}
+  details.rules{background:var(--panel);border-radius:16px;padding:14px 16px;margin-top:16px}
+  details.rules summary{font-weight:800;cursor:pointer;list-style:none}
+  details.rules summary::before{content:"▶ ";font-size:11px;color:var(--mute)}
+  details.rules[open] summary::before{content:"▼ "}
+  details.rules ol{padding-left:20px;margin:10px 0 0;line-height:1.7;font-size:14px}
+  details.rules .score{margin-top:10px;font-size:13px;color:var(--mute);line-height:1.7}
+
+  /* setup */
+  .sec-title{font-size:15px;font-weight:800;margin:18px 0 10px;color:var(--mute)}
+  .player-input{display:flex;gap:8px;margin-bottom:8px}
+  .player-input input,.field{flex:1;width:100%;background:var(--panel);border:2px solid var(--line);border-radius:12px;
+    padding:12px 14px;font-size:16px;color:var(--text);font-family:inherit;outline:none}
+  .player-input input:focus,.field:focus{border-color:var(--accent)}
+  .player-input .del{width:46px;border-radius:12px;background:var(--panel);font-size:18px;color:var(--mute)}
+  .addbtn{width:100%;padding:12px;border-radius:12px;background:transparent;border:2px dashed var(--line);color:var(--mute);font-weight:700;font-size:15px}
+  .seg{display:flex;background:var(--panel);border-radius:12px;padding:4px;gap:4px}
+  .seg button{flex:1;padding:10px;border-radius:9px;background:transparent;font-weight:800;color:var(--mute);font-size:15px}
+  .seg button.on{background:var(--accent);color:#1a1240}
+
+  .modes{display:flex;flex-direction:column;gap:8px}
+  .mode-opt{display:flex;align-items:center;gap:12px;text-align:left;background:var(--panel);border:2px solid var(--line);
+    border-radius:14px;padding:12px 14px;color:var(--text)}
+  .mode-opt .mi{font-size:26px}
+  .mode-opt b{display:block;font-size:16px}
+  .mode-opt small{display:block;font-size:12px;color:var(--mute);margin-top:2px}
+  .mode-opt.on{border-color:var(--accent);background:#b197fc1a}
+  .mode-opt.on b{color:var(--accent)}
+
+  /* topic */
+  .host-tag{display:inline-block;background:#ffd43b22;color:var(--B);padding:6px 14px;border-radius:999px;font-weight:800;font-size:15px}
+  .odai-label{font-size:13px;color:var(--mute);font-weight:800;letter-spacing:.1em}
+  .odai{font-size:28px;font-weight:800;line-height:1.3;margin-top:4px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .chip{background:var(--panel2);padding:8px 12px;border-radius:10px;font-weight:700;font-size:15px}
+  .hint{background:#b197fc1a;border-radius:12px;padding:10px 12px;font-size:13px;color:#d0c3ff;line-height:1.6}
+
+  /* pass */
+  .pass{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:14px;padding:20px 0}
+  .pass .phone{font-size:64px;animation:wiggle 1.6s ease-in-out infinite}
+  @keyframes wiggle{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+  .pass .who{font-size:34px;font-weight:800;line-height:1.3}
+  .pass .who small{display:block;font-size:18px;color:var(--mute);font-weight:700}
+  .pass .btn{margin-top:18px}
+
+  /* tiers */
+  .tiers{display:flex;flex-direction:column;gap:8px}
+  .tier-row{display:flex;gap:8px;align-items:stretch}
+  .tl{width:54px;min-height:56px;border-radius:12px;display:grid;place-items:center;font-size:24px;font-weight:800;color:#1a1a2e;flex-shrink:0}
+  .tl.S{background:var(--S)}.tl.A{background:var(--A)}.tl.B{background:var(--B)}.tl.C{background:var(--C)}.tl.D{background:var(--D)}
+  .slot{flex:1;min-height:56px;border-radius:12px;background:var(--panel);border:2px dashed var(--line);
+    font-size:17px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:6px 10px;text-align:center;color:var(--mute)}
+  .slot.filled{border:2px solid transparent;background:var(--panel2);color:var(--text)}
+  .slot.filled::after{content:"×";margin-left:10px;color:var(--mute);font-size:15px}
+  .slot.target{border:2px solid var(--accent);color:var(--accent);background:#b197fc14;animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 #b197fc55}50%{box-shadow:0 0 0 5px #b197fc00}}
+  .pool{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;min-height:56px;align-items:center;margin-top:16px;
+    background:#0e1022;border-radius:16px;padding:14px}
+  .pick{background:#fff;color:#1a1a2e;padding:12px 16px;border-radius:12px;font-size:17px;font-weight:800;box-shadow:0 3px 0 #b8bce0}
+  .pick:active{transform:translateY(2px);box-shadow:0 1px 0 #b8bce0}
+  .arr-head{margin-bottom:14px}
+  .arr-head .odai{font-size:22px}
+  .arr-head .who{font-size:13px;font-weight:800;color:var(--B)}
+  .updown{display:flex;justify-content:space-between;font-size:12px;color:var(--mute);margin:0 2px 6px 62px}
+
+  /* reveal */
+  .rv-item{flex:1;min-height:56px;border-radius:12px;background:var(--panel2);display:flex;flex-direction:column;justify-content:center;padding:8px 12px}
+  .rv-item.hidden{background:var(--panel);border:2px dashed var(--line);align-items:center;font-size:24px;color:var(--line);font-weight:800}
+  .rv-item.pop{animation:pop .45s cubic-bezier(.2,1.6,.4,1)}
+  @keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
+  .rv-name{font-size:18px;font-weight:800}
+  .hits{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+  .hit{font-size:11px;font-weight:800;background:#51cf6626;color:var(--good);padding:2px 7px;border-radius:999px}
+  .nohit{font-size:11px;color:var(--mute)}
+  .score-table{width:100%;border-collapse:collapse;margin-top:6px}
+  .score-table td{padding:10px 6px;border-bottom:1px solid var(--line);font-weight:700;font-size:15px}
+  .score-table td.num{text-align:right;white-space:nowrap}
+  .score-table .plus{color:var(--good);font-weight:800}
+  .perfect{color:var(--B);font-size:12px;font-weight:800;margin-left:4px}
+  .talk{background:#ffd43b1a;color:var(--B);border-radius:14px;padding:14px;text-align:center;font-weight:800;line-height:1.5}
+  .guess-list{margin-top:10px;display:flex;flex-direction:column;gap:10px}
+  .gl-name{font-size:13px;font-weight:800;color:var(--mute);margin-bottom:4px}
+  .gl-row{display:flex;gap:4px}
+  .gl-cell{flex:1;border-radius:8px;padding:6px 2px;text-align:center;font-size:11px;font-weight:800;background:var(--panel2);line-height:1.3;word-break:break-all}
+  .gl-cell b{display:block;font-size:10px;opacity:.7}
+  .gl-cell.ok{background:#51cf6633;color:#8ce99a}
+  .gl-cell.near{background:#fcc41926;color:#ffe066}
+  .legend{display:flex;gap:12px;font-size:11px;color:var(--mute);margin-top:8px}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+
+  /* final */
+  .rank{display:flex;align-items:center;gap:12px;background:var(--panel);border-radius:16px;padding:14px 16px;margin-bottom:10px}
+  .rank .pos{font-size:26px;width:40px;text-align:center;font-weight:800}
+  .rank .nm{flex:1;font-size:18px;font-weight:800}
+  .rank .pt{font-size:22px;font-weight:800}
+  .rank .pt small{font-size:13px;color:var(--mute)}
+  .rank.first{background:linear-gradient(135deg,#ffd43b33,#ff6b6b22);border:2px solid #ffd43b88}
+
+  /* modal */
+  .overlay{position:fixed;inset:0;background:#0009;display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}
+  .modal{background:var(--panel);border-radius:20px;padding:20px;width:100%;max-width:400px}
+  .modal h3{font-size:18px;margin-bottom:12px}
+
+  .home-btn{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px;border-radius:18px;
+    background:var(--panel);border:2px solid var(--line);color:var(--text);margin-bottom:12px}
+  .home-btn:active{transform:scale(.98)}
+  .home-btn .mi{font-size:30px}
+  .home-btn b{display:block;font-size:18px}
+  .home-btn small{display:block;font-size:12px;color:var(--mute);margin-top:3px}
+  .home-btn.primary{border-color:var(--accent);background:#b197fc1a}
+  .code-big{font-size:52px;font-weight:800;letter-spacing:.18em;text-align:center;color:var(--B);line-height:1.1}
+  .code-input{font-size:28px !important;letter-spacing:.3em;text-align:center;font-weight:800}
+  .members{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+  .member{display:flex;align-items:center;gap:10px;background:var(--panel2);border-radius:12px;padding:10px 12px;font-weight:800}
+  .member .tag{font-size:11px;padding:2px 8px;border-radius:999px;background:#b197fc33;color:#d0c3ff;font-weight:800}
+  .member .tag.you{background:#51cf6633;color:#8ce99a}
+  .member .st{margin-left:auto;font-size:13px;color:var(--mute)}
+  .member .st.ok{color:var(--good)}
+  .member.away{opacity:.45}
+  .spinner{width:44px;height:44px;border-radius:50%;border:4px solid var(--line);border-top-color:var(--accent);animation:spin 1s linear infinite;margin:0 auto}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .wait{flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center;gap:14px;padding:20px 0}
+  .wait .big{font-size:24px;font-weight:800;line-height:1.4}
+  .banner{background:#ff6b6b22;color:#ffa8a8;border-radius:12px;padding:10px 12px;font-size:13px;font-weight:700;margin-bottom:12px;text-align:center}
+  .or{display:flex;align-items:center;gap:10px;color:var(--mute);font-size:13px;margin:16px 0}
+  .or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="peerjs.min.js"></script>
+<script>
+/* Phone-to-phone rooms over WebRTC (PeerJS), shaped like the small subset of the
+   room API the game uses: join() -> {presence, peers, onPeers, leave}.
+   Star topology: the room host's peer id is derived from the room code; every
+   other phone connects to it, sends its own presence, and receives everyone's. */
+window.PeerRoomApi = (() => {
+  const PREFIX = 'minna-tier-v1-';
+  const OPTS = window.__PEER_OPTS || { debug: 0 };
+  const HEARTBEAT = 2500, STALE = 12000;
+
+  function entry(peer, presence, me){
+    return { peer, presence: presence || {}, by: null, isMe: peer === me, sameTab: peer === me, kind: 'viewer', guest: false, updatedAt: Date.now() };
+  }
+  function cleanPresence(p){
+    if (!p || typeof p !== 'object' || Array.isArray(p)) return null;
+    try { const s = JSON.stringify(p); if (s.length > 6000) return null; return JSON.parse(s); } catch(e) { return null; }
+  }
+
+  function join(code, asHost){
+    return new Promise((resolve, reject) => {
+      const hostId = PREFIX + code;
+      const peer = asHost ? new Peer(hostId, OPTS) : new Peer(OPTS);
+      let me = null, mine = {}, handlers = [], snapshot = Object.freeze([]), closed = false, settled = false;
+      const clients = new Map();               // host: peerId -> {conn, presence, last}
+      let hostConn = null, hostPeers = [], lastHost = 0, reconnectTimer = null; // client side
+      let notifyQueued = false;
+
+      const api = {
+        presence(patch){
+          for (const k in patch) { if (patch[k] === null) delete mine[k]; else mine[k] = JSON.parse(JSON.stringify(patch[k])); }
+          if (asHost) queueBroadcast(); else { sendMine(); notify(); }
+          return Promise.resolve();
+        },
+        peers(){ return snapshot; },
+        onPeers(h, onErr){ handlers.push(h); notify(); return () => { handlers = handlers.filter(x => x !== h); }; },
+        connected(){ return asHost ? !peer.disconnected : !!(hostConn && hostConn.open); },
+        leave(){ closed = true; clearInterval(timer); clearTimeout(reconnectTimer); try { peer.destroy(); } catch(e) {} return Promise.resolve(); }
+      };
+
+      function rebuild(){
+        let list;
+        if (asHost) {
+          list = [entry(me, mine, me)];
+          clients.forEach((c, id) => { if (c.conn.open) list.push(entry(id, c.presence, me)); });
+        } else {
+          list = hostPeers.filter(p => p && typeof p.peer === 'string' && p.peer !== me).map(p => entry(p.peer, p.presence, me));
+          list.unshift(entry(me, mine, me));
+        }
+        snapshot = Object.freeze(list);
+      }
+      function notify(){
+        if (notifyQueued) return; notifyQueued = true;
+        setTimeout(() => {
+          notifyQueued = false; if (closed) return;
+          rebuild();
+          const change = { peers: snapshot, joined: [], left: [], updated: [] };
+          handlers.slice().forEach(h => { try { h(change); } catch(e) { console.error(e); } });
+        }, 0);
+      }
+
+      /* ---------- host ---------- */
+      let bcQueued = false;
+      function queueBroadcast(){
+        if (bcQueued) return; bcQueued = true;
+        setTimeout(() => { bcQueued = false; broadcast(); }, 30);
+      }
+      function broadcast(){
+        if (closed) return;
+        const peersList = [{ peer: me, presence: mine }];
+        clients.forEach((c, id) => { if (c.conn.open) peersList.push({ peer: id, presence: c.presence }); });
+        const msg = { t: 's', peers: peersList };
+        clients.forEach(c => { if (c.conn.open) { try { c.conn.send(msg); } catch(e) {} } });
+        notify();
+      }
+      if (asHost) {
+        peer.on('connection', conn => {
+          conn.on('open', () => {
+            const old = clients.get(conn.peer);
+            if (old && old.conn !== conn) { try { old.conn.close(); } catch(e) {} }
+            clients.set(conn.peer, { conn, presence: {}, last: Date.now() });
+            queueBroadcast();
+          });
+          conn.on('data', msg => {
+            const c = clients.get(conn.peer); if (!c || c.conn !== conn) return;
+            c.last = Date.now();
+            if (msg && msg.t === 'p') {
+              const p = cleanPresence(msg.p);
+              if (p && JSON.stringify(p) !== JSON.stringify(c.presence)) { c.presence = p; queueBroadcast(); }
+            }
+          });
+          const drop = () => { const c = clients.get(conn.peer); if (c && c.conn === conn) { clients.delete(conn.peer); queueBroadcast(); } };
+          conn.on('close', drop); conn.on('error', drop);
+        });
+      }
+
+      /* ---------- client ---------- */
+      function sendMine(){ if (hostConn && hostConn.open) { try { hostConn.send({ t: 'p', p: mine }); } catch(e) {} } }
+      function connectHost(){
+        if (closed || peer.destroyed) return;
+        clearTimeout(reconnectTimer);
+        const conn = peer.connect(hostId, { reliable: true });
+        hostConn = conn;
+        conn.on('open', () => {
+          if (hostConn !== conn) return;
+          lastHost = Date.now(); sendMine();
+          if (!settled) { settled = true; resolve(api); }
+        });
+        conn.on('data', msg => {
+          if (hostConn !== conn) return;
+          lastHost = Date.now();
+          if (msg && msg.t === 's' && Array.isArray(msg.peers)) { hostPeers = msg.peers; notify(); }
+        });
+        const lost = () => { if (hostConn !== conn) return; hostConn = null; hostPeers = []; notify(); scheduleReconnect(); };
+        conn.on('close', lost); conn.on('error', lost);
+      }
+      function scheduleReconnect(){
+        if (closed) return;
+        clearTimeout(reconnectTimer);
+        reconnectTimer = setTimeout(() => {
+          if (peer.disconnected && !peer.destroyed) { try { peer.reconnect(); } catch(e) {} }
+          connectHost();
+        }, 2500);
+      }
+
+      /* ---------- shared ---------- */
+      peer.on('open', id => {
+        me = id;
+        if (asHost) { settled = true; resolve(api); notify(); }
+        else connectHost();
+      });
+      peer.on('disconnected', () => { if (!closed && !peer.destroyed) setTimeout(() => { try { peer.reconnect(); } catch(e) {} }, 1000); });
+      peer.on('error', err => {
+        const type = err && err.type;
+        if (!settled) {
+          settled = true; closed = true; clearInterval(timer);
+          try { peer.destroy(); } catch(e) {}
+          reject({ code: type === 'unavailable-id' ? 'taken' : type === 'peer-unavailable' ? 'no_host'
+            : (type === 'network' || type === 'server-error' || type === 'socket-error') ? 'network' : (type || 'error') });
+          return;
+        }
+        if (!asHost && type === 'peer-unavailable') scheduleReconnect();
+      });
+
+      const timer = setInterval(() => {
+        if (closed) return;
+        const now = Date.now();
+        if (asHost) {
+          clients.forEach((c, id) => { if (now - c.last > STALE) { try { c.conn.close(); } catch(e) {} clients.delete(id); } });
+          broadcast();
+        } else {
+          sendMine();
+          if (hostConn && hostConn.open && now - lastHost > STALE) { try { hostConn.close(); } catch(e) {} hostConn = null; hostPeers = []; notify(); scheduleReconnect(); }
+        }
+      }, HEARTBEAT);
+
+      document.addEventListener('visibilitychange', () => {
+        if (closed || document.visibilityState !== 'visible') return;
+        if (peer.disconnected && !peer.destroyed) { try { peer.reconnect(); } catch(e) {} }
+        if (!asHost && !(hostConn && hostConn.open)) connectHost();
+      });
+
+      setTimeout(() => {
+        if (!settled) { settled = true; closed = true; clearInterval(timer); try { peer.destroy(); } catch(e) {} reject({ code: 'timeout' }); }
+      }, 15000);
+    });
+  }
+  return { join, isPeer: true };
+})();
+
+</script>
+<script>
+const TIERS = ['S','A','B','C','D'];
+const TOPICS = [
+  ['好きな朝ごはん',['ごはん','パン','シリアル','ヨーグルト','食べない']],
+  ['好きな季節のイベント',['お花見','夏祭り','ハロウィン','クリスマス','お正月']],
+  ['無人島に持っていきたいもの',['ナイフ','ライター','スマホ','本','寝袋']],
+  ['好きなおにぎりの具',['鮭','ツナマヨ','梅','昆布','明太子']],
+  ['理想の休日の過ごし方',['一日中寝る','ゲーム','買い物','旅行','映画']],
+  ['好きなラーメン',['醤油','味噌','塩','豚骨','担々麺']],
+  ['飼ってみたい動物',['犬','猫','うさぎ','ハムスター','インコ']],
+  ['生まれ変わったらなりたいもの',['鳥','猫','イルカ','大富豪','天才']],
+  ['好きな寿司ネタ',['マグロ','サーモン','エビ','イクラ','たまご']],
+  ['やりたくない家事',['料理','洗濯','掃除','皿洗い','ゴミ出し']],
+  ['欲しい超能力',['瞬間移動','透明人間','時間停止','心を読む','空を飛ぶ']],
+  ['好きなお菓子',['チョコ','ポテチ','グミ','クッキー','せんべい']],
+  ['行ってみたい国',['アメリカ','フランス','イタリア','韓国','オーストラリア']],
+  ['デートで行きたい場所',['遊園地','水族館','映画館','カフェ','温泉']],
+  ['好きな鍋',['すき焼き','しゃぶしゃぶ','キムチ鍋','もつ鍋','寄せ鍋']],
+  ['もらって嬉しいプレゼント',['現金','手紙','花束','アクセサリー','食べ物']],
+  ['好きな天気',['晴れ','くもり','雨','雪','台風前の風']],
+  ['コンビニでつい買うもの',['おにぎり','お弁当','スイーツ','ホットスナック','飲み物']],
+  ['好きな丼',['牛丼','親子丼','カツ丼','天丼','海鮮丼']],
+  ['人生で大事なもの',['お金','時間','友達','健康','趣味']],
+  ['カレーに欲しい具',['じゃがいも','にんじん','玉ねぎ','お肉','ゆで卵']],
+  ['住んでみたい家',['タワマン','一軒家','古民家','海辺の家','山小屋']],
+  ['好きだった教科',['国語','数学','理科','社会','体育']],
+  ['好きなパン',['メロンパン','カレーパン','クロワッサン','あんぱん','食パン']],
+  ['恋人に求めるもの',['顔','性格','経済力','笑いのツボ','価値観']],
+  ['やってみたい仕事',['社長','芸能人','パイロット','医者','配信者']],
+  ['好きな麺類',['ラーメン','うどん','そば','パスタ','焼きそば']],
+  ['好きな果物',['いちご','ぶどう','もも','みかん','メロン']],
+  ['好きな夏の食べ物',['かき氷','スイカ','そうめん','焼きとうもろこし','アイス']],
+  ['冬に欠かせないもの',['こたつ','毛布','鍋','温泉','手袋']],
+  ['好きなファミレスメニュー',['ハンバーグ','ドリア','パフェ','ステーキ','ドリンクバー']],
+  ['好きな卵料理',['目玉焼き','卵焼き','ゆで卵','オムライス','卵かけご飯']],
+  ['よく飲む飲み物',['水','お茶','コーヒー','炭酸','ジュース']],
+  ['旅行で重視すること',['食事','景色','宿','買い物','移動のラクさ']],
+  ['動物園で見たい動物',['パンダ','ライオン','ゾウ','キリン','ペンギン']],
+  ['好きなお祭りの屋台',['たこ焼き','わたあめ','りんご飴','焼きそば','射的']],
+  ['怖いもの',['お化け','虫','高い所','暗闇','怒った人']],
+  ['1億円あったら',['家を買う','世界旅行','全部貯金','寄付','仕事を辞める']],
+  ['好きな色',['赤','青','緑','黄色','黒']],
+  ['朝起きてまずすること',['スマホを見る','水を飲む','顔を洗う','トイレ','二度寝']],
+  ['好きな映画のジャンル',['アクション','ホラー','恋愛','コメディ','アニメ']],
+  ['好きな焼肉の部位',['カルビ','ロース','タン','ハラミ','ホルモン']],
+  ['好きなアイスの味',['バニラ','チョコ','抹茶','ストロベリー','チョコミント']],
+  ['好きなお弁当のおかず',['唐揚げ','卵焼き','ウインナー','ハンバーグ','ミニトマト']],
+  ['好きなサンドイッチ',['たまご','ハム','ツナ','カツ','フルーツ']],
+  ['好きなおでんの具',['大根','たまご','ちくわ','こんにゃく','もち巾着']],
+  ['テンションが上がる瞬間',['給料日','金曜の夜','誕生日','旅行前日','推しの供給']],
+  ['ストレス発散方法',['寝る','食べる','歌う','運動','誰かに話す']],
+  ['好きな乗り物',['電車','飛行機','車','船','自転車']],
+  ['苦手な虫',['ゴキブリ','クモ','ハチ','ムカデ','蚊']]
+].map(([t,i])=>({t,i}));
+
+/* ================= helpers ================= */
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rid = () => Math.random().toString(36).slice(2, 8);
+function lsGet(k){ try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch(e) { return null; } }
+function lsSet(k, v){ try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
+function randomTopicIdx(exclude){
+  let pool = TOPICS.map((_,i)=>i).filter(i => !exclude.includes(i));
+  if (!pool.length) pool = TOPICS.map((_,i)=>i);
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+function scoreGuess(hostRank, g){
+  let exact = 0, pts = 0;
+  g.forEach((item, t) => {
+    const d = Math.abs(t - hostRank.indexOf(item));
+    if (d === 0) { exact++; pts += 3; } else if (d === 1) pts += 1;
+  });
+  const perfect = exact === 5;
+  if (perfect) pts += 5;
+  return {exact, pts, perfect};
+}
+function rankPlayers(list){ // [{name, score}]
+  const sorted = list.map(p=>({...p})).sort((a,b)=>b.score-a.score);
+  let pos = 0, prev = null;
+  return sorted.map((p,k)=>{ if (p.score !== prev) { pos = k+1; prev = p.score; } return {...p, pos}; });
+}
+const validPerm = a => Array.isArray(a) && a.length === 5 && [0,1,2,3,4].every(k => a.includes(k));
+
+/* ================= shared UI builders ================= */
+function rulesBlock(){
+  return `<details class="rules"><summary>あそびかた</summary>
+    <ol>
+      <li>毎ラウンド、1人が<b>主役</b>になります。</li>
+      <li>お題を決めます。<b>ランダム</b>（アプリが出題）か<b>自分で決める</b>（主役が考える）を選べます。</li>
+      <li>主役はこっそり、5つの項目を<b>S〜D</b>のティアに並べます。</li>
+      <li>ほかの人は、主役がどう並べたかを予想します。</li>
+      <li>全員そろったら、DからSまで1つずつ答え合わせ！主役は理由も語ろう。</li>
+    </ol>
+    <div class="score">得点：ぴったり <b>3点</b>／1つズレ <b>1点</b>／全部ぴったりで <b>+5点</b> ボーナス<br>全員が同じ回数ずつ主役をやったら、合計点で順位が決まります。</div>
+  </details>`;
+}
+function topicCard(tp){
+  return `<div class="card">
+    <div class="odai-label">お題</div>
+    <div class="odai">${esc(tp.title)}</div>
+    <div class="chips">${tp.items.map(it=>`<span class="chip">${esc(it)}</span>`).join('')}</div>
+  </div>`;
+}
+function editForm(t, hostName, cancelAction, saveAction){
+  const ph = ['鮭','ツナマヨ','梅','昆布','明太子'];
+  return `<div class="center"><span class="host-tag">👑 主役：${esc(hostName)}さん</span></div>
+    <h2 class="center mt12" style="font-size:22px">お題を決めよう</h2>
+    <p class="center mute small mt8">お題と、ランクをつける5つの項目を入れてね</p>
+    <div class="sec-title">お題</div>
+    <input class="field" id="ed-title" value="${esc(t.title)}" maxlength="24" placeholder="例：好きなおにぎりの具" autocomplete="off">
+    <div class="sec-title">5つの項目</div>
+    ${t.items.map((it,i)=>`<input class="field" style="margin-bottom:8px" id="ed-${i}" value="${esc(it)}" maxlength="12" placeholder="例：${ph[i]}" autocomplete="off">`).join('')}
+    <button class="addbtn mt8" data-a="example">🎲 迷ったら例を入れる</button>
+    <p id="ed-err" class="small mt8" style="color:var(--S);min-height:18px"></p>
+    <div class="grow"></div>
+    <div class="row2 mt16">
+      ${cancelAction ? `<button class="btn sub" data-a="${cancelAction}">キャンセル</button>` : ''}
+      <button class="btn" data-a="${saveAction}">このお題にする</button>
+    </div>`;
+}
+function readEditForm(){
+  const title = document.getElementById('ed-title').value.trim();
+  const items = [0,1,2,3,4].map(i => document.getElementById('ed-'+i).value.trim());
+  const err = document.getElementById('ed-err');
+  let msg = '';
+  if (!title) msg = 'お題を入力してください';
+  else if (items.some(v=>!v)) msg = '5つの項目をすべて入力してください';
+  else if (new Set(items).size !== 5) msg = '同じ項目があります';
+  if (msg) { err.textContent = msg; return null; }
+  return {title, items};
+}
+function fillExample(){
+  const d = TOPICS[Math.floor(Math.random()*TOPICS.length)];
+  document.getElementById('ed-title').value = d.t;
+  d.i.forEach((v,i)=> document.getElementById('ed-'+i).value = v);
+  document.getElementById('ed-err').textContent = '';
+}
+function arrangeBoard(items, slots, target){
+  const placed = new Set(slots.filter(v=>v!==null));
+  const full = slots.indexOf(null) === -1;
+  return `<div class="tiers">
+      ${TIERS.map((t,i)=>{
+        const v = slots[i];
+        const cls = v!==null ? 'filled' : (target===i ? 'target' : '');
+        return `<div class="tier-row"><div class="tl ${t}">${t}</div>
+          <button class="slot ${cls}" data-a="slot" data-i="${i}">${v!==null ? esc(items[v]) : (target===i ? 'ここに入れる' : '')}</button></div>`;
+      }).join('')}
+    </div>
+    <div class="pool">
+      ${full ? `<span class="mute small">全部並べました！ タップすると外せます</span>`
+        : items.map((it,k)=> placed.has(k) ? '' : `<button class="pick" data-a="pick" data-k="${k}">${esc(it)}</button>`).join('')}
+    </div>
+    <p class="mute small center mt8">${full ? '' : `項目をタップすると <b style="color:var(--accent)">${TIERS[target] ?? ''}</b> に入ります`}</p>`;
+}
+function revealRows(items, hostRank, guessList, step){
+  const done = step >= 5;
+  return `<div class="tiers mt16">${TIERS.map((t,i)=>{
+    const shown = i >= 5 - step;
+    if (!shown) return `<div class="tier-row"><div class="tl ${t}">${t}</div><div class="rv-item hidden">？</div></div>`;
+    const item = hostRank[i];
+    const hitters = guessList.filter(g => g.arr[i] === item);
+    const justShown = i === 5 - step && !done;
+    return `<div class="tier-row"><div class="tl ${t}">${t}</div>
+      <div class="rv-item ${justShown?'pop':''}">
+        <div class="rv-name">${esc(items[item])}</div>
+        <div class="hits">${hitters.length ? hitters.map(g=>`<span class="hit">✓ ${esc(g.name)}</span>`).join('') : `<span class="nohit">正解者なし</span>`}</div>
+      </div></div>`;
+  }).join('')}</div>`;
+}
+function resultBlock(items, hostRank, results, hostName){ // results: [{name, pts, exact, perfect, arr}]
+  const res = [...results].sort((a,b)=>b.pts-a.pts);
+  return `<div class="talk mt16">👑 ${esc(hostName)}さん、<br>この並びにした理由を教えて！</div>
+    <div class="card mt16">
+      <div class="odai-label">このラウンドの得点</div>
+      <table class="score-table">
+        ${res.length ? res.map(r=>`<tr><td>${esc(r.name)}${r.perfect?'<span class="perfect">🎉 パーフェクト</span>':''}</td>
+          <td class="num mute small">ぴったり ${r.exact}/5</td>
+          <td class="num plus">+${r.pts}</td></tr>`).join('') : `<tr><td class="mute">予想した人がいません</td></tr>`}
+      </table>
+    </div>
+    <details class="rules"><summary>みんなの予想を見る</summary>
+      <div class="legend"><span><i style="background:#51cf6655"></i>ぴったり</span><span><i style="background:#fcc41944"></i>1つズレ</span></div>
+      <div class="guess-list">
+        ${results.map(r=>`<div><div class="gl-name">${esc(r.name)}</div><div class="gl-row">
+          ${r.arr.map((it,t)=>{
+            const d = Math.abs(t - hostRank.indexOf(it));
+            return `<div class="gl-cell ${d===0?'ok':d===1?'near':''}"><b>${TIERS[t]}</b>${esc(items[it])}</div>`;
+          }).join('')}
+        </div></div>`).join('')}
+      </div>
+    </details>`;
+}
+function finalBlock(players){
+  const medal = p => p===1?'🥇':p===2?'🥈':p===3?'🥉':p;
+  const r = rankPlayers(players);
+  const winners = r.filter(p=>p.pos===1).map(p=>esc(p.name)).join('さん・');
+  return `<div class="logo" style="margin:20px 0 10px"><div class="pre">結果発表</div>
+      <div class="main" style="font-size:32px">🏆 ${winners}さん<br><span style="font-size:22px">の優勝！</span></div></div>
+    <div class="mt16">${r.map(p=>`<div class="rank ${p.pos===1?'first':''}">
+        <div class="pos">${medal(p.pos)}</div><div class="nm">${esc(p.name)}${p.you?' <span class="small mute">(あなた)</span>':''}</div>
+        <div class="pt">${p.score}<small> 点</small></div></div>`).join('')}</div>`;
+}
+function scoreModal(players, extraButtons){
+  const r = rankPlayers(players);
+  return `<div class="overlay" data-a="closeModal"><div class="modal" data-stop>
+    <h3>現在のスコア</h3>
+    <table class="score-table">${r.map(p=>`<tr><td>${p.pos}位　${esc(p.name)}</td><td class="num">${p.score} 点</td></tr>`).join('')}</table>
+    ${extraButtons}
+    <button class="btn mt12" data-a="closeModal">閉じる</button>
+  </div></div>`;
+}
+function confirmModal(title, sub, okAction, okLabel){
+  return `<div class="overlay" data-a="closeModal"><div class="modal" data-stop>
+    <h3>${title}</h3><p class="mute small">${sub}</p>
+    <div class="row2 mt16"><button class="btn sub" data-a="closeModal">もどる</button>
+    <button class="btn" style="background:var(--S);box-shadow:0 4px 0 #c94a4a" data-a="${okAction}">${okLabel}</button></div>
+  </div></div>`;
+}
+
+/* ================= app state ================= */
+const KEY = 'minna-tier-v1';
+const OKEY = 'minna-tier-online';
+let S = freshState();
+let saved = lsGet(KEY);
+let modal = null;
+
+function freshState(){
+  return { screen:'title', setupNames:['','',''], laps:1, topicMode:'random', players:[], order:[], roundIndex:0,
+    topic:null, usedTopics:[], hostRank:null, guesses:{}, guessQueue:[], guessPos:0,
+    slots:[null,null,null,null,null], target:0, revealStep:0, roundScored:false, roundResult:null };
+}
+function saveLocal(){
+  if (['title','setup','online'].includes(S.screen)) return;
+  if (S.screen === 'final') { lsSet(KEY, null); saved = null; return; }
+  lsSet(KEY, S);
+}
+const app = document.getElementById('app');
+function go(screen){ S.screen = screen; modal = null; render(); window.scrollTo(0,0); }
+
+/* ================= local (one phone) mode ================= */
+const host = () => S.players[S.order[S.roundIndex]];
+const hostIdx = () => S.order[S.roundIndex];
+const totalRounds = () => S.order.length;
+
+function startGame(){
+  const names = S.setupNames.map((n,i)=> n.trim() || `プレイヤー${i+1}`);
+  S.players = names.map(name => ({name, score:0}));
+  S.order = [];
+  for (let l=0; l<S.laps; l++) for (let i=0; i<S.players.length; i++) S.order.push(i);
+  S.roundIndex = 0; S.usedTopics = [];
+  startRound();
+}
+function pickTopic(){
+  const ex = [...S.usedTopics]; if (S.topic && S.topic.idx >= 0) ex.push(S.topic.idx);
+  const idx = randomTopicIdx(ex);
+  S.topic = { idx, title: TOPICS[idx].t, items: [...TOPICS[idx].i] };
+}
+function startRound(){
+  S.topic = null;
+  S.hostRank = null; S.guesses = {}; S.revealStep = 0; S.roundScored = false; S.roundResult = null;
+  if (S.topicMode === 'custom') go('edit'); else { pickTopic(); go('topic'); }
+}
+function lockTopic(){ if (S.topic.idx >= 0) S.usedTopics.push(S.topic.idx); go('passHost'); }
+function beginArrange(){ S.slots = [null,null,null,null,null]; S.target = 0; go('arrange'); }
+function confirmArrange(){
+  if (S.screen !== 'arrange' || S.slots.indexOf(null) !== -1) return;
+  if (!S.hostRank) {
+    S.hostRank = S.slots.slice();
+    const n = S.players.length, h = hostIdx();
+    S.guessQueue = []; for (let k=1; k<n; k++) S.guessQueue.push((h + k) % n);
+    S.guessPos = 0; go('passGuess');
+  } else {
+    S.guesses[S.guessQueue[S.guessPos]] = S.slots.slice();
+    S.guessPos++;
+    go(S.guessPos < S.guessQueue.length ? 'passGuess' : 'passAll');
+  }
+}
+function finishReveal(){
+  if (S.roundScored) return;
+  S.roundResult = S.guessQueue.map(pid => ({pid, ...scoreGuess(S.hostRank, S.guesses[pid])}));
+  S.roundResult.forEach(r => S.players[r.pid].score += r.pts);
+  S.roundScored = true;
+}
+function nextRound(){ S.roundIndex++; if (S.roundIndex >= totalRounds()) go('final'); else startRound(); }
+
+function topbar(){
+  return `<div class="topbar"><div class="info">ラウンド ${S.roundIndex+1} / ${totalRounds()}</div>
+    <button class="iconbtn" data-a="menu">≡ メニュー</button></div>`;
+}
+function vTitle(){
+  const canResume = saved && saved.players && saved.players.length;
+  return `<div class="logo">
+      <div class="pre">みんなで</div>
+      <div class="main">ティア表</div>
+      <div class="stripes">${TIERS.map(t=>`<div class="stripe"><b style="background:var(--${t})">${t}</b><span></span></div>`).join('')}</div>
+    </div>
+    <p class="center mute small">主役が作ったティア表の並び順を当てる<br>価値観パーティーゲーム</p>
+    <div class="mt24">
+      <button class="home-btn primary" data-a="toOnline"><span class="mi">🌐</span><span><b>オンラインで遊ぶ</b><small>それぞれ自分のスマホで参加</small></span></button>
+      <button class="home-btn" data-a="toSetup"><span class="mi">📱</span><span><b>1台で遊ぶ</b><small>1台のスマホをみんなで回す</small></span></button>
+      ${canResume ? `<button class="btn sub" data-a="resume">1台モードの続きから（ラウンド ${saved.roundIndex+1}）</button>` : ''}
+    </div>
+    ${rulesBlock()}`;
+}
+function modeAndLaps(mode, laps, n, prefix){
+  return `<div class="sec-title">お題の決め方</div>
+    <div class="modes">
+      <button class="mode-opt ${mode==='random'?'on':''}" data-a="${prefix}mode" data-v="random">
+        <span class="mi">🎲</span><span><b>ランダム</b><small>アプリがお題を出します（${TOPICS.length}種類）</small></span></button>
+      <button class="mode-opt ${mode==='custom'?'on':''}" data-a="${prefix}mode" data-v="custom">
+        <span class="mi">✏️</span><span><b>自分で決める</b><small>主役がお題と5つの項目を考えます</small></span></button>
+    </div>
+    <div class="sec-title">1人が主役をやる回数</div>
+    <div class="seg">${[1,2,3].map(l=>`<button class="${laps===l?'on':''}" data-a="${prefix}laps" data-v="${l}">${l}回</button>`).join('')}</div>
+    <p class="mute small mt8">全${n*laps}ラウンド</p>`;
+}
+function vSetup(){
+  const n = S.setupNames.length;
+  return `<div class="topbar"><button class="iconbtn" data-a="toTitle">← もどる</button><div></div></div>
+    <h2 style="font-size:24px">1台で遊ぶ</h2>
+    <div class="sec-title">プレイヤー（${n}人）</div>
+    ${S.setupNames.map((v,i)=>`<div class="player-input">
+        <input id="pn-${i}" data-name="${i}" value="${esc(v)}" placeholder="プレイヤー${i+1}" maxlength="10" autocomplete="off">
+        ${n>2?`<button class="del" data-a="delPlayer" data-i="${i}">×</button>`:''}
+      </div>`).join('')}
+    ${n<12?`<button class="addbtn" data-a="addPlayer">＋ プレイヤーを追加</button>`:''}
+    ${modeAndLaps(S.topicMode, S.laps, n, '')}
+    <div class="grow"></div>
+    <button class="btn mt24" data-a="start">ゲームスタート</button>`;
+}
+function vTopic(){
+  return `${topbar()}
+    <div class="center"><span class="host-tag">👑 主役：${esc(host().name)}さん</span></div>
+    <div class="mt16">${topicCard(S.topic)}</div>
+    <div class="mt16">${S.topicMode === 'custom'
+      ? `<button class="btn sub" data-a="editTopic">✏️ 作り直す</button>`
+      : `<button class="btn sub" data-a="reroll">🔀 別のお題にする</button>`}</div>
+    <div class="hint mt16">お題と項目はみんなで見てOK。並び順は主役だけの秘密！</div>
+    <div class="grow"></div>
+    <button class="btn mt24" data-a="lockTopic">このお題で決定</button>`;
+}
+function vEdit(){
+  const t = S.topic || {title:'', items:['','','','','']};
+  return `${topbar()}${editForm(t, host().name, S.topic ? 'cancelEdit' : null, 'saveEdit')}`;
+}
+function vPass(name, sub, label, action, extra){
+  return `${topbar()}
+    <div class="pass">
+      <div class="phone">📱</div>
+      ${extra||''}
+      <div class="who">${name ? `${esc(name)}さんに<small>スマホを渡してください</small>` : `全員そろったら<small>みんなで画面を見よう</small>`}</div>
+      <p class="mute">${sub}</p>
+      <button class="btn" data-a="${action}">${label}</button>
+    </div>`;
+}
+function vArrange(){
+  const isHost = !S.hostRank;
+  const h = host();
+  const full = S.slots.indexOf(null) === -1;
+  const head = isHost
+    ? `<div class="who">👑 ${esc(h.name)}さんのティア表</div><div class="odai">${esc(S.topic.title)}</div><p class="mute small mt8">あなたの本音で並べよう。上ほど高評価！</p>`
+    : `<div class="who">🔍 ${esc(S.players[S.guessQueue[S.guessPos]].name)}さんの予想（${S.guessPos+1}/${S.guessQueue.length}）</div><div class="odai">${esc(S.topic.title)}</div><p class="mute small mt8">${esc(h.name)}さんならどう並べる？</p>`;
+  return `${topbar()}
+    <div class="arr-head">${head}</div>
+    ${arrangeBoard(S.topic.items, S.slots, S.target)}
+    <div class="grow"></div>
+    <div class="row2 mt16">
+      <button class="btn sub" style="flex:0 0 32%" data-a="resetSlots">リセット</button>
+      <button class="btn" data-a="confirm" ${full?'':'disabled'}>決定</button>
+    </div>`;
+}
+function vReveal(){
+  const h = host();
+  const step = S.revealStep, done = step >= 5;
+  if (done) finishReveal();
+  const guessList = S.guessQueue.map(pid=>({name:S.players[pid].name, arr:S.guesses[pid]}));
+  let bottom;
+  if (!done) bottom = `<div class="grow"></div><button class="btn mt24" data-a="flip">めくる：${TIERS[4-step]}ティア</button>`;
+  else {
+    const results = S.roundResult.map(r=>({name:S.players[r.pid].name, pts:r.pts, exact:r.exact, perfect:r.perfect, arr:S.guesses[r.pid]}));
+    bottom = resultBlock(S.topic.items, S.hostRank, results, h.name) +
+      `<button class="btn mt24" data-a="next">${S.roundIndex + 1 >= totalRounds() ? '最終結果へ 🏆' : '次のラウンドへ'}</button>`;
+  }
+  return `${topbar()}
+    <div class="center"><span class="host-tag">👑 ${esc(h.name)}さんのティア表</span></div>
+    <div class="odai center mt8" style="font-size:22px">${esc(S.topic.title)}</div>
+    ${revealRows(S.topic.items, S.hostRank, guessList, step)}
+    ${bottom}`;
+}
+function vFinal(){
+  return `${finalBlock(S.players.map(p=>({name:p.name, score:p.score})))}
+    <div class="grow"></div>
+    <button class="btn mt24" data-a="again">同じメンバーでもう一度</button>
+    <button class="btn sub" data-a="toSetup">メンバーを変える</button>
+    <button class="btn sub" data-a="toTitle">タイトルへ</button>`;
+}
+function localHtml(){
+  switch (S.screen) {
+    case 'title': return vTitle();
+    case 'setup': return vSetup();
+    case 'topic': return vTopic();
+    case 'edit': return vEdit();
+    case 'passHost': return vPass(host().name, 'ほかの人は画面を見ないでね', `${esc(host().name)}です。ティア表を作る`, 'beginArrange',
+      `<div class="hint">お題：<b>${esc(S.topic.title)}</b></div>`);
+    case 'passGuess': {
+      const g = S.players[S.guessQueue[S.guessPos]];
+      return vPass(g.name, `予想 ${S.guessPos+1} / ${S.guessQueue.length}人目　・　ほかの人は見ないでね`, `${esc(g.name)}です。予想する`, 'beginArrange');
+    }
+    case 'passAll': return vPass(null, '全員の予想がそろいました！', '答え合わせをする', 'toReveal');
+    case 'arrange': return vArrange();
+    case 'reveal': return vReveal();
+    case 'final': return vFinal();
+  }
+  return vTitle();
+}
+
+/* ================= online mode =================
+   One player (the room host, "GM") keeps the authoritative game state G in their
+   room presence. Everyone else publishes only their own inputs (name, topic draft,
+   ranking, reveal/next requests) in their presence; the GM folds them into G. */
+const O = {
+  status:'idle', api:null, room:null, unsub:null, code:'', name:'', joinCode:'', isGM:false,
+  G:null, peers:[], my:{}, joinedAt:0, slots:[null,null,null,null,null], target:0, slotKey:'',
+  editing:false, err:''
+};
+(function(){ const s = lsGet(OKEY); if (s) { O.name = s.name || ''; O.joinCode = s.code || ''; } })();
+const NET = window.PeerRoomApi ? 'peer' : 'claude';
+let apiPromise = null;
+function getRoomApi(){
+  if (!apiPromise && NET === 'peer') apiPromise = Promise.resolve(window.PeerRoomApi);
+  if (!apiPromise) {
+    apiPromise = (window.claude && typeof window.claude.use === 'function')
+      ? Promise.resolve(window.claude.use('room')).catch(()=>null)
+      : new Promise(res => setTimeout(() => {
+          if (window.claude && typeof window.claude.use === 'function') Promise.resolve(window.claude.use('room')).then(res, ()=>res(null));
+          else res(null);
+        }, 1500));
+  }
+  return apiPromise;
+}
+function saveOnline(){
+  const s = lsGet(OKEY) || {};
+  s.name = O.name; s.code = O.code || O.joinCode;
+  if (O.isGM && O.G) s.gm = {code:O.code, G:O.G, t:Date.now()};
+  lsSet(OKEY, s);
+}
+function setPresence(patch){
+  for (const k in patch) { if (patch[k] === null) delete O.my[k]; else O.my[k] = patch[k]; }
+  if (O.room) O.room.presence(patch).catch(()=>{});
+}
+const myPeer = () => (O.peers.find(p => p.sameTab) || {}).peer || null;
+function presOf(peer){
+  if (peer && peer === myPeer()) return O.my;
+  const p = O.peers.find(x => x.peer === peer);
+  return (p && p.presence) || null;
+}
+const gKey = G => G.gid + '-' + G.ri;
+const cleanStr = (s, n) => typeof s === 'string' ? s.replace(/[\u0000-\u001f]/g,'').trim().slice(0, n) : '';
+function cleanTopic(tp, key){
+  if (!tp || tp.r !== key) return null;
+  const t = cleanStr(tp.t, 24);
+  const i = Array.isArray(tp.i) ? tp.i.slice(0,5).map(x => cleanStr(x, 12)) : [];
+  if (!t || i.length !== 5 || i.some(x=>!x) || new Set(i).size !== 5) return null;
+  return {t, i, x: Number.isInteger(tp.x) ? tp.x : -1};
+}
+function newLobbyG(prev){
+  return {gid:rid(), ph:'lobby', mode: prev ? prev.mode : 'random', laps: prev ? prev.laps : 1, pl:[], ord:[], ri:0,
+    tp:null, sub:[], rk:null, st:0, done:false, rs:null, used: prev ? prev.used.slice(-40) : [], v: prev ? prev.v + 1 : 0};
+}
+
+async function enterRoom(code, asGM, restoreG){
+  O.status = 'connecting'; O.err = ''; render();
+  const api = await getRoomApi();
+  if (!api) { O.status = 'unavailable'; render(); return; }
+  let room = null, lastErr = null;
+  for (let attempt = 0; attempt < (NET === 'peer' ? (restoreG ? 8 : 4) : 1); attempt++) {
+    try { room = NET === 'peer' ? await api.join(code, asGM) : await api.join('tier-' + code); break; }
+    catch(e) {
+      lastErr = (e && e.code) || 'error';
+      if (NET === 'peer' && lastErr === 'taken' && asGM && !restoreG) { code = String(Math.floor(1000 + Math.random()*9000)); continue; }
+      if (NET === 'peer' && lastErr === 'taken' && restoreG) { await new Promise(r => setTimeout(r, 2500)); continue; }
+      break;
+    }
+  }
+  if (!room) {
+    O.status = 'error'; O.err = lastErr; render(); return;
+  }
+  O.api = api; O.room = room; O.code = code; O.isGM = asGM; O.status = 'in'; O.my = {};
+  O.G = asGM ? (restoreG || newLobbyG()) : null;
+  O.joinedAt = Date.now(); O.slotKey = ''; O.editing = false;
+  O.peers = room.peers();
+  O.unsub = room.onPeers(ch => { O.peers = ch.peers; onRoomChange(); },
+    err => { O.status = 'error'; O.err = err.code; render(); });
+  setPresence({n: O.name, gm: asGM ? true : null, g: asGM ? O.G : null});
+  saveOnline();
+  keepAwake();
+  onRoomChange();
+}
+let wakeLock = null;
+async function keepAwake(){
+  try { if (navigator.wakeLock && !wakeLock && document.visibilityState === 'visible') { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } } catch(e) {}
+}
+document.addEventListener('visibilitychange', () => { if (O.status === 'in') keepAwake(); });
+async function leaveRoom(){
+  const r = O.room;
+  if (O.unsub) try { O.unsub(); } catch(e) {}
+  O.room = null; O.unsub = null; O.status = 'idle'; O.G = null; O.my = {}; O.peers = [];
+  if (O.isGM) { const s = lsGet(OKEY) || {}; delete s.gm; lsSet(OKEY, s); }
+  O.isGM = false;
+  modal = null;
+  if (r) try { await r.leave(); } catch(e) {}
+  render();
+}
+
+function onRoomChange(){
+  if (O.status !== 'in') return;
+  if (O.isGM) gmTick();
+  else {
+    const gm = O.peers.find(p => !p.sameTab && p.presence && p.presence.gm === true && p.presence.g && typeof p.presence.g === 'object');
+    O.G = gm ? gm.presence.g : (O.G && Date.now() - O.lastGM < 4000 ? O.G : null);
+    if (gm) O.lastGM = Date.now();
+  }
+  clientEffects();
+  render();
+}
+
+/* ---- GM: fold everyone's presence into G ---- */
+const seenOrder = {}; let seenCounter = 0;
+function gmTick(){
+  const G = O.G; if (!G) return;
+  const before = JSON.stringify(G);
+  const me = myPeer();
+  const present = O.peers.filter(p => p.kind !== 'agent');
+  const presentSet = new Set(present.map(p => p.peer));
+  if (me) presentSet.add(me);
+  const named = present.map(p => ({p: p.peer, n: cleanStr((p.sameTab ? O.my : (p.presence || {})).n, 10)})).filter(x => x.n);
+  if (me && !named.find(x => x.p === me)) named.push({p: me, n: O.name});
+
+  if (G.ph === 'lobby') {
+    named.forEach(x => { if (!(x.p in seenOrder)) seenOrder[x.p] = seenCounter++; });
+    named.sort((a,b) => a.p === me ? -1 : b.p === me ? 1 : seenOrder[a.p] - seenOrder[b.p]);
+    G.pl = named.slice(0, 12).map(x => ({p:x.p, n:x.n, s:0}));
+  } else {
+    // re-attach players who reloaded (new peer label) by their name
+    const bound = new Set(G.pl.map(x => x.p).filter(p => presentSet.has(p)));
+    G.pl.forEach(pl => {
+      if (presentSet.has(pl.p)) return;
+      const m = named.find(x => x.n === pl.n && !bound.has(x.p));
+      if (m) { pl.p = m.p; bound.add(m.p); }
+    });
+  }
+
+  const key = gKey(G);
+  const shi = G.ord[G.ri];
+  const sh = G.pl[shi];
+  const shPres = sh ? presOf(sh.p) : null;
+
+  if (G.ph === 'topic' && shPres) {
+    const tp = cleanTopic(shPres.tp, key);
+    if (tp) G.tp = tp;
+    if (shPres.lk === key && G.tp) {
+      G.ph = 'arrange'; G.sub = [];
+      if (G.tp.x >= 0) G.used.push(G.tp.x);
+    }
+  }
+  if (G.ph === 'arrange') {
+    const subs = {};
+    G.pl.forEach((pl, i) => {
+      const pr = presentSet.has(pl.p) ? presOf(pl.p) : null;
+      if (pr && pr.a && pr.a.r === key && validPerm(pr.a.k)) subs[i] = pr.a.k.slice();
+    });
+    G.sub = Object.keys(subs).map(Number);
+    const active = G.pl.map((_, i) => i).filter(i => presentSet.has(G.pl[i].p));
+    if (subs[shi] && active.every(i => subs[i])) {
+      G.ph = 'reveal'; G.st = 0; G.done = false; G.rs = null;
+      G.rk = {h: subs[shi], g: {}};
+      Object.keys(subs).forEach(i => { if (+i !== shi) G.rk.g[i] = subs[i]; });
+    }
+  }
+  if (G.ph === 'reveal') {
+    if (shPres && shPres.st && shPres.st.r === key) G.st = Math.max(G.st, Math.min(5, shPres.st.v | 0));
+    if (G.st >= 5 && !G.done) {
+      G.rs = Object.keys(G.rk.g).map(i => {
+        const sc = scoreGuess(G.rk.h, G.rk.g[i]);
+        return {i:+i, pts:sc.pts, ex:sc.exact, pf:sc.perfect};
+      });
+      G.rs.forEach(r => { if (G.pl[r.i]) G.pl[r.i].s += r.pts; });
+      G.done = true;
+    }
+    if (G.done && shPres && shPres.nx === key) gmAdvance(G);
+  }
+  if (JSON.stringify(G) !== before) {
+    G.v++;
+    setPresence({g: G});
+    saveOnline();
+  }
+}
+function gmAdvance(G){
+  G.ri++;
+  G.tp = null; G.sub = []; G.rk = null; G.st = 0; G.done = false; G.rs = null;
+  G.ph = G.ri >= G.ord.length ? 'final' : 'topic';
+}
+function gmChange(fn){ if (!O.isGM || !O.G) return; fn(O.G); O.G.v++; setPresence({g:O.G}); gmTick(); saveOnline(); clientEffects(); render(); }
+
+/* ---- everyone: local reactions to G ---- */
+function myIndex(){ const G = O.G, me = myPeer(); return G && G.pl ? G.pl.findIndex(pl => pl.p === me) : -1; }
+function isShuyaku(){ const G = O.G; return !!G && G.ord && myIndex() === G.ord[G.ri] && myIndex() >= 0; }
+function clientEffects(){
+  const G = O.G; if (!G || !G.ord) return;
+  const key = gKey(G);
+  if (G.ph === 'topic' && isShuyaku() && G.mode !== 'custom' && !(O.my.tp && O.my.tp.r === key)) {
+    rerollOnline();
+  }
+  if (G.ph === 'arrange' && O.slotKey !== key) { O.slotKey = key; O.slots = [null,null,null,null,null]; O.target = 0; }
+  if (G.ph !== 'topic') O.editing = false;
+}
+function rerollOnline(){
+  const G = O.G, key = gKey(G);
+  const ex = [...(G.used || [])]; if (O.my.tp && O.my.tp.x >= 0) ex.push(O.my.tp.x);
+  const x = randomTopicIdx(ex);
+  setPresence({tp: {r:key, t:TOPICS[x].t, i:[...TOPICS[x].i], x}});
+  if (O.isGM) gmTick();
+}
+function onlineAct(kind){ // requests the 主役 can make; the GM applies them directly
+  const G = O.G; if (!G) return;
+  const key = gKey(G);
+  if (kind === 'flip') {
+    if (O.isGM) gmChange(g => { g.st = Math.min(5, g.st + 1); });
+    else setPresence({st: {r:key, v: Math.min(5, (G.st|0) + 1)}});
+  }
+  if (kind === 'next') {
+    if (O.isGM) gmChange(g => { if (g.done) gmAdvance(g); });
+    else setPresence({nx: key});
+  }
+}
+
+/* ---- online views ---- */
+function oTopbar(){
+  const G = O.G;
+  const round = G && G.ord && G.ord.length && G.ph !== 'lobby' && G.ph !== 'final' ? `　ラウンド ${G.ri+1} / ${G.ord.length}` : '';
+  return `<div class="topbar"><div class="info">🌐 部屋 ${esc(O.code)}${round}</div>
+    <button class="iconbtn" data-a="menu">≡ メニュー</button></div>`;
+}
+function vOnlineEntry(){
+  const s = lsGet(OKEY) || {};
+  const gm = s.gm && s.gm.G && Date.now() - s.gm.t < 6*3600e3 ? s.gm : null;
+  return `<div class="topbar"><button class="iconbtn" data-a="toTitle">← もどる</button><div></div></div>
+    <h2 style="font-size:24px">オンラインで遊ぶ</h2>
+    <div class="sec-title">あなたの名前</div>
+    <input class="field" id="o-name" value="${esc(O.name)}" maxlength="10" placeholder="例：たろう" autocomplete="off">
+    <p id="o-err" class="small mt8" style="color:var(--S);min-height:18px">${esc(O.err)}</p>
+    <button class="btn" data-a="o-create">部屋を作る</button>
+    <div class="or">または</div>
+    <input class="field code-input" id="o-code" value="${esc(O.joinCode)}" maxlength="4" inputmode="numeric" placeholder="0000" autocomplete="off">
+    <button class="btn sub mt12" data-a="o-join">部屋番号を入れて参加</button>
+    ${gm ? `<button class="btn sub" data-a="o-restore">部屋 ${esc(gm.code)} にホストとして戻る</button>` : ''}
+    <div class="hint mt24">部屋を作った人がホストです。ホストに表示される<b>4桁の部屋番号</b>を、ほかの人が入力して参加します。<br>${NET === 'peer'
+      ? 'このページのURLを友達に送れば、ログインなしで参加できます。<br>ホストはゲーム中、このページを開いたままにしてね。'
+      : '参加する人も、Claudeにログインしてこのページを開いておく必要があります。'}</div>`;
+}
+function vOnlineStatus(){
+  if (O.status === 'connecting') return `<div class="wait"><div class="spinner"></div><div class="big">接続中…</div></div>`;
+  const errText = {no_host:'部屋が見つかりませんでした。<br>部屋番号が合っているか、ホストがページを開いているか確認してね。',
+    timeout:'時間内につながりませんでした。<br>電波の良いところで、もう一度ためしてね。',
+    taken:'部屋を作れませんでした。<br>少し待ってから、もう一度ためしてね。',
+    network:'サーバーにつながりませんでした。<br>インターネット接続を確認してね。'};
+  const msg = O.status === 'unavailable'
+    ? 'オンライン機能に接続できませんでした。<br>Claudeにログインした状態でこのページを開いているか確認してください。<br><span class="small">（公開リンクから開いた場合や、Claudeの外で開いた場合は使えません）</span>'
+    : (errText[O.err] || `接続できませんでした。<br><span class="small mute">(${esc(O.err)})</span>`);
+  return `<div class="wait"><div style="font-size:48px">📡</div><div style="line-height:1.7">${msg}</div>
+    <button class="btn" data-a="o-back">もどる</button></div>`;
+}
+function memberList(G, statusFn){
+  const me = myPeer();
+  const present = new Set(O.peers.map(p => p.peer));
+  return `<div class="members">${G.pl.map((pl, i) => {
+    const away = G.ph !== 'lobby' && !present.has(pl.p);
+    const st = statusFn ? statusFn(pl, i) : '';
+    return `<div class="member ${away?'away':''}">${esc(pl.n)}
+      ${i === 0 && G.ph === 'lobby' ? '<span class="tag">ホスト</span>' : ''}
+      ${pl.p === me ? '<span class="tag you">あなた</span>' : ''}
+      <span class="st ${st.ok?'ok':''}">${away ? '離席中' : esc(st.t || '')}</span></div>`;
+  }).join('')}</div>`;
+}
+function vOnlineLobby(G){
+  const n = G.pl.length;
+  return `${oTopbar()}
+    <div class="card center">
+      <div class="odai-label">部屋番号</div>
+      <div class="code-big mt8">${esc(O.code)}</div>
+      <p class="mute small mt8">この番号をみんなに伝えて参加してもらおう</p>
+    </div>
+    <div class="sec-title">参加メンバー（${n}人）</div>
+    ${memberList(G)}
+    ${O.isGM ? `${modeAndLaps(G.mode, G.laps, Math.max(n,1), 'o-')}
+      <div class="grow"></div>
+      <button class="btn mt24" data-a="o-start" ${n < 2 ? 'disabled' : ''}>${n < 2 ? 'あと1人以上集まったらスタート' : 'ゲームスタート'}</button>`
+    : `<div class="card mt16"><div class="small mute">お題：<b style="color:var(--text)">${G.mode === 'custom' ? '✏️ 自分で決める' : '🎲 ランダム'}</b>　／　主役：<b style="color:var(--text)">1人${G.laps}回</b></div></div>
+      <div class="grow"></div>
+      <div class="wait" style="flex:0"><div class="spinner"></div><p class="mute">ホストがスタートするのを待っています</p></div>`}`;
+}
+function vOnlineTopic(G){
+  const key = gKey(G);
+  const sh = G.pl[G.ord[G.ri]];
+  if (isShuyaku()) {
+    const mine = O.my.tp && O.my.tp.r === key ? O.my.tp : null;
+    const locked = O.my.lk === key;
+    if (G.mode === 'custom' && (O.editing || !mine)) {
+      const t = mine ? {title:mine.t, items:mine.i} : {title:'', items:['','','','','']};
+      return `${oTopbar()}${editForm(t, sh.n, mine ? 'o-cancelEdit' : null, 'o-saveEdit')}`;
+    }
+    if (!mine) return `${oTopbar()}<div class="wait"><div class="spinner"></div></div>`;
+    return `${oTopbar()}
+      <div class="center"><span class="host-tag">👑 今回はあなたが主役！</span></div>
+      <div class="mt16">${topicCard({title:mine.t, items:mine.i})}</div>
+      <div class="mt16">${G.mode === 'custom'
+        ? `<button class="btn sub" data-a="o-editTopic" ${locked?'disabled':''}>✏️ 作り直す</button>`
+        : `<button class="btn sub" data-a="o-reroll" ${locked?'disabled':''}>🔀 別のお題にする</button>`}</div>
+      <div class="hint mt16">このお題はみんなの画面にも表示されています。並び順はあなただけの秘密！</div>
+      <div class="grow"></div>
+      <button class="btn mt24" data-a="o-lock" ${locked?'disabled':''}>${locked ? '開始中…' : 'このお題で決定'}</button>`;
+  }
+  return `${oTopbar()}
+    <div class="center"><span class="host-tag">👑 主役：${esc(sh ? sh.n : '?')}さん</span></div>
+    ${G.tp ? `<div class="mt16">${topicCard({title:G.tp.t, items:G.tp.i})}</div>` : ''}
+    <div class="wait" style="flex:${G.tp?0:1}"><div class="spinner"></div>
+      <p class="mute">${esc(sh ? sh.n : '?')}さんがお題を${G.mode === 'custom' ? '考えて' : '選んで'}います…</p></div>`;
+}
+function vOnlineArrange(G){
+  const key = gKey(G);
+  const mi = myIndex();
+  const sh = G.pl[G.ord[G.ri]];
+  const items = G.tp.i;
+  const submitted = O.my.a && O.my.a.r === key;
+  if (mi >= 0 && !submitted) {
+    const full = O.slots.indexOf(null) === -1;
+    const head = isShuyaku()
+      ? `<div class="who">👑 あなたのティア表</div><div class="odai">${esc(G.tp.t)}</div><p class="mute small mt8">本音で並べよう。上ほど高評価！</p>`
+      : `<div class="who">🔍 ${esc(sh.n)}さんのティア表を予想</div><div class="odai">${esc(G.tp.t)}</div><p class="mute small mt8">${esc(sh.n)}さんならどう並べる？</p>`;
+    return `${oTopbar()}
+      <div class="arr-head">${head}</div>
+      ${arrangeBoard(items, O.slots, O.target)}
+      <div class="grow"></div>
+      <div class="row2 mt16">
+        <button class="btn sub" style="flex:0 0 32%" data-a="resetSlots">リセット</button>
+        <button class="btn" data-a="o-submit" ${full?'':'disabled'}>決定</button>
+      </div>`;
+  }
+  const subSet = new Set(G.sub || []);
+  const present = new Set(O.peers.map(p => p.peer));
+  const left = G.pl.filter((pl, i) => present.has(pl.p) && !subSet.has(i)).length;
+  return `${oTopbar()}
+    <div class="center"><span class="host-tag">👑 ${esc(sh.n)}さんのティア表</span></div>
+    <div class="odai center mt8" style="font-size:22px">${esc(G.tp.t)}</div>
+    <div class="wait" style="flex:0"><div class="spinner"></div>
+      <div class="big">${mi < 0 ? '観戦中' : '提出しました！'}</div>
+      <p class="mute">${left > 0 ? `あと ${left} 人を待っています` : 'まもなく答え合わせ！'}</p></div>
+    ${memberList(G, (pl, i) => subSet.has(i) ? {t:'✓ 提出済み', ok:true} : {t: i === G.ord[G.ri] ? '👑 並べ中…' : '予想中…'})}
+    <div class="grow"></div>
+    ${mi >= 0 ? `<button class="btn sub mt24" data-a="o-redo">並べ直す</button>` : ''}`;
+}
+function vOnlineReveal(G){
+  const sh = G.pl[G.ord[G.ri]];
+  const items = G.tp.i;
+  const step = G.st | 0, done = step >= 5 && G.done;
+  const guessList = Object.keys(G.rk.g).map(i => ({name: (G.pl[i] || {}).n || '?', arr: G.rk.g[i]}));
+  const canDrive = isShuyaku() || O.isGM;
+  let bottom;
+  if (!done) {
+    bottom = `<div class="grow"></div>` + (canDrive
+      ? `<button class="btn mt24" data-a="o-flip">めくる：${TIERS[Math.max(0, 4-step)]}ティア</button>`
+      : `<p class="mute center mt24">👑 ${esc(sh.n)}さんがめくるのを待っています</p>`);
+  } else {
+    const results = (G.rs || []).map(r => ({name:(G.pl[r.i]||{}).n || '?', pts:r.pts, exact:r.ex, perfect:r.pf, arr:G.rk.g[r.i]}));
+    const last = G.ri + 1 >= G.ord.length;
+    bottom = resultBlock(items, G.rk.h, results, sh.n) + (canDrive
+      ? `<button class="btn mt24" data-a="o-next">${last ? '最終結果へ 🏆' : '次のラウンドへ'}</button>`
+      : `<p class="mute center mt24">${esc(sh.n)}さんが次に進めるのを待っています</p>`);
+  }
+  return `${oTopbar()}
+    <div class="center"><span class="host-tag">👑 ${esc(sh.n)}さんのティア表</span></div>
+    <div class="odai center mt8" style="font-size:22px">${esc(G.tp.t)}</div>
+    ${revealRows(items, G.rk.h, guessList, Math.min(step, 5))}
+    ${bottom}`;
+}
+function vOnlineFinal(G){
+  const me = myPeer();
+  return `${oTopbar()}${finalBlock(G.pl.map(p => ({name:p.n, score:p.s, you: p.p === me})))}
+    <div class="grow"></div>
+    ${O.isGM ? `<button class="btn mt24" data-a="o-again">同じメンバーでもう一度</button>
+      <button class="btn sub" data-a="o-lobby">ロビーにもどる</button>` : `<p class="mute center mt24">ホストの操作を待っています</p>`}
+    <button class="btn sub" data-a="o-askLeave">退出する</button>`;
+}
+function onlineHtml(){
+  if (O.status === 'idle') return vOnlineEntry();
+  if (O.status !== 'in') return vOnlineStatus();
+  const G = O.G;
+  if (!G) {
+    const late = Date.now() - O.joinedAt > 7000;
+    return `${oTopbar()}<div class="wait">${late ? '<div style="font-size:48px">🔍</div>' : '<div class="spinner"></div>'}
+      <div class="big">${late ? 'ホストが見つかりません' : '部屋に接続しています…'}</div>
+      <p class="mute">${late ? '部屋番号が合っているか、ホストがこのページを開いているか確認してね' : ''}</p>
+      ${late ? `<button class="btn sub" data-a="o-leave">もどる</button>` : ''}</div>`;
+  }
+  const banner = !O.isGM && O.lastGM && Date.now() - O.lastGM > 2500 ? `<div class="banner">ホストとの接続が途切れています…</div>` : '';
+  let body;
+  switch (G.ph) {
+    case 'lobby': body = vOnlineLobby(G); break;
+    case 'topic': body = vOnlineTopic(G); break;
+    case 'arrange': body = vOnlineArrange(G); break;
+    case 'reveal': body = vOnlineReveal(G); break;
+    case 'final': body = vOnlineFinal(G); break;
+    default: body = '';
+  }
+  return banner + body;
+}
+
+/* ================= modal / render ================= */
+function modalHtml(){
+  if (!modal) return '';
+  if (S.screen === 'online') {
+    const G = O.G;
+    if (modal === 'menu') {
+      const players = G && G.pl ? G.pl.map(p => ({name:p.n, score:p.s})) : [];
+      const skip = O.isGM && G && ['topic','arrange','reveal'].includes(G.ph)
+        ? `<button class="btn sub mt12" data-a="o-askSkip">このラウンドをスキップ</button>` : '';
+      return scoreModal(players, `${skip}<button class="btn sub mt12" data-a="o-askLeave">部屋から退出する</button>`);
+    }
+    if (modal === 'leave') return confirmModal('部屋から退出しますか？', O.isGM ? 'あなたはホストなので、退出するとゲームが終わります。' : 'あとで同じ部屋番号と名前で戻れます。', 'o-leave', '退出する');
+    if (modal === 'skip') return confirmModal('このラウンドをスキップしますか？', '主役が抜けてしまったときなどに使います。このラウンドの得点は入りません。', 'o-skip', 'スキップ');
+    return '';
+  }
+  if (modal === 'menu') return scoreModal(S.players.map(p => ({name:p.name, score:p.score})), `<button class="btn sub mt12" data-a="askQuit">ゲームをやめる</button>`);
+  if (modal === 'quit') return confirmModal('ゲームをやめてタイトルに戻りますか？', 'ここまでのスコアは消えます。', 'quit', 'やめる');
+  return '';
+}
+let lastHtml = '';
+function render(){
+  const ae = document.activeElement;
+  const fid = ae && ae.id;
+  let ss = null, se = null;
+  try { ss = ae.selectionStart; se = ae.selectionEnd; } catch(e) {}
+  let html;
+  try { html = S.screen === 'online' ? onlineHtml() : localHtml(); }
+  catch(e) { console.error(e); html = `<div class="wait"><div class="big">表示できませんでした</div><button class="btn" data-a="toTitle">タイトルへ</button></div>`; }
+  html += modalHtml();
+  if (html !== lastHtml) {
+    app.innerHTML = html; lastHtml = html;
+    if (fid) { const el = document.getElementById(fid); if (el) { el.focus(); try { el.setSelectionRange(ss, se); } catch(e) {} } }
+  }
+  saveLocal();
+}
+setInterval(() => { if (S.screen === 'online' && O.status === 'in') render(); }, 1500);
+
+/* ================= events ================= */
+app.addEventListener('input', e => {
+  const t = e.target;
+  if (t.dataset.name !== undefined) S.setupNames[+t.dataset.name] = t.value;
+  if (t.id === 'o-name') O.name = t.value;
+  if (t.id === 'o-code') { t.value = t.value.replace(/\D/g,'').slice(0,4); O.joinCode = t.value; }
+});
+const curArr = () => S.screen === 'online' ? O : S;
+app.addEventListener('click', e => {
+  const el = e.target.closest('[data-a]');
+  if (!el) return;
+  if (el.dataset.a === 'closeModal' && e.target.closest('[data-stop]') && !e.target.closest('button')) return;
+  const a = el.dataset.a;
+  switch (a) {
+    /* shared */
+    case 'toTitle': if (S.screen === 'online' && O.room) leaveRoom(); go('title'); break;
+    case 'menu': modal = 'menu'; render(); break;
+    case 'closeModal': modal = null; render(); break;
+    case 'example': fillExample(); break;
+    case 'slot': {
+      const A = curArr(), i = +el.dataset.i;
+      if (A.slots[i] !== null) A.slots[i] = null;
+      A.target = i; render(); break;
+    }
+    case 'pick': {
+      const A = curArr(), k = +el.dataset.k;
+      let t = A.target;
+      if (t < 0 || A.slots[t] !== null) t = A.slots.indexOf(null);
+      if (t < 0) break;
+      A.slots[t] = k; A.target = A.slots.indexOf(null); render(); break;
+    }
+    case 'resetSlots': { const A = curArr(); A.slots = [null,null,null,null,null]; A.target = 0; render(); break; }
+
+    /* local */
+    case 'toSetup':
+      if (S.screen === 'final' && S.players.length) S.setupNames = S.players.map(p=>p.name);
+      if (!S.setupNames.length) S.setupNames = ['','',''];
+      go('setup'); break;
+    case 'resume': S = {...freshState(), ...saved}; render(); break;
+    case 'addPlayer': S.setupNames.push(''); render(); setTimeout(()=>{ const ins = app.querySelectorAll('[data-name]'); ins[ins.length-1]?.focus(); }, 0); break;
+    case 'delPlayer': S.setupNames.splice(+el.dataset.i, 1); render(); break;
+    case 'laps': S.laps = +el.dataset.v; render(); break;
+    case 'mode': S.topicMode = el.dataset.v; render(); break;
+    case 'start': lsSet(KEY, null); saved = null; startGame(); break;
+    case 'reroll': pickTopic(); render(); break;
+    case 'editTopic': go('edit'); break;
+    case 'cancelEdit': go('topic'); break;
+    case 'saveEdit': { const r = readEditForm(); if (r) { S.topic = {idx:-1, ...r}; go('topic'); } break; }
+    case 'lockTopic': lockTopic(); break;
+    case 'beginArrange': beginArrange(); break;
+    case 'confirm': confirmArrange(); break;
+    case 'toReveal': S.revealStep = 0; go('reveal'); break;
+    case 'flip': S.revealStep++; render(); if (S.revealStep >= 5) setTimeout(()=>window.scrollBy({top:260, behavior:'smooth'}), 50); break;
+    case 'next': nextRound(); break;
+    case 'again': S.players.forEach(p=>p.score=0); S.roundIndex = 0; startRound(); break;
+    case 'askQuit': modal = 'quit'; render(); break;
+    case 'quit': lsSet(KEY, null); saved = null; S = {...freshState(), setupNames: S.players.map(p=>p.name)}; modal = null; render(); break;
+
+    /* online */
+    case 'toOnline': O.err = ''; getRoomApi(); go('online'); break;
+    case 'o-create': case 'o-join': case 'o-restore': {
+      O.name = (document.getElementById('o-name') || {}).value?.trim() || O.name.trim();
+      if (!O.name) { O.err = '名前を入力してください'; render(); break; }
+      if (a === 'o-join') {
+        const c = (O.joinCode || '').trim();
+        if (!/^\d{4}$/.test(c)) { O.err = '4桁の部屋番号を入力してください'; render(); break; }
+        enterRoom(c, false);
+      } else if (a === 'o-restore') {
+        const s = lsGet(OKEY) || {};
+        if (s.gm) enterRoom(s.gm.code, true, s.gm.G);
+      } else {
+        enterRoom(String(Math.floor(1000 + Math.random()*9000)), true);
+      }
+      break;
+    }
+    case 'o-back': O.status = 'idle'; render(); break;
+    case 'o-mode': gmChange(G => { G.mode = el.dataset.v; }); break;
+    case 'o-laps': gmChange(G => { G.laps = +el.dataset.v; }); break;
+    case 'o-start': gmChange(G => {
+      if (G.pl.length < 2) return;
+      G.ord = []; for (let l=0; l<G.laps; l++) for (let i=0; i<G.pl.length; i++) G.ord.push(i);
+      G.pl.forEach(p => p.s = 0);
+      G.gid = rid(); G.ri = 0; G.ph = 'topic'; G.tp = null; G.sub = []; G.rk = null; G.st = 0; G.done = false; G.rs = null;
+    }); break;
+    case 'o-reroll': rerollOnline(); render(); break;
+    case 'o-editTopic': O.editing = true; render(); break;
+    case 'o-cancelEdit': O.editing = false; render(); break;
+    case 'o-saveEdit': {
+      const r = readEditForm(); if (!r) break;
+      setPresence({tp: {r: gKey(O.G), t: r.title, i: r.items, x: -1}});
+      O.editing = false; onRoomChange(); break;
+    }
+    case 'o-lock': setPresence({lk: gKey(O.G)}); onRoomChange(); break;
+    case 'o-submit':
+      if (O.slots.indexOf(null) !== -1) break;
+      setPresence({a: {r: gKey(O.G), k: O.slots.slice()}}); onRoomChange(); window.scrollTo(0,0); break;
+    case 'o-redo': setPresence({a: null}); onRoomChange(); break;
+    case 'o-flip': onlineAct('flip'); setTimeout(() => { if (O.G && O.G.st >= 5) window.scrollBy({top:260, behavior:'smooth'}); }, 300); break;
+    case 'o-next': onlineAct('next'); window.scrollTo(0,0); break;
+    case 'o-again': gmChange(G => {
+      G.pl.forEach(p => p.s = 0);
+      G.gid = rid(); G.ri = 0; G.ph = 'topic'; G.tp = null; G.sub = []; G.rk = null; G.st = 0; G.done = false; G.rs = null;
+    }); break;
+    case 'o-lobby': gmChange(G => { Object.assign(G, newLobbyG(G)); }); break;
+    case 'o-askSkip': modal = 'skip'; render(); break;
+    case 'o-skip': modal = null; gmChange(G => gmAdvance(G)); break;
+    case 'o-askLeave': modal = 'leave'; render(); break;
+    case 'o-leave': leaveRoom(); break;
+  }
+});
+
+render();
+
+</script>
+</body>
+</html>
