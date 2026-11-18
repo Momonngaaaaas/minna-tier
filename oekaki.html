@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#15172b">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap" rel="stylesheet">
+<title>お絵かき伝言ゲーム｜みんなでパーティー</title>
+<meta name="description" content="お題を絵と言葉で伝言していくゲーム。スマホのブラウザで、ログインなしでみんなで遊べます。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>">
+<style>
+  :root{
+    --bg:#15172b; --panel:#21243f; --panel2:#2b2f52; --line:#3a3f6b;
+    --text:#f4f5ff; --mute:#a3a8d1;
+    --S:#ff6b6b; --A:#ffa94d; --B:#ffd43b; --C:#69db7c; --D:#4dabf7;
+    --accent:#b197fc; --good:#51cf66; --near:#fcc419;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--text);
+    font-family:"M PLUS Rounded 1c",system-ui,-apple-system,"Hiragino Sans",sans-serif;
+    -webkit-user-select:none;user-select:none}
+  body{min-height:100vh;min-height:100dvh}
+  #app{max-width:480px;margin:0 auto;padding:16px 16px 40px;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
+  input{-webkit-user-select:text;user-select:text}
+  button{font-family:inherit;cursor:pointer;border:none;color:inherit}
+  h1,h2,h3,p{margin:0}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;min-height:36px}
+  .topbar .info{font-size:13px;color:var(--mute);font-weight:700}
+  .iconbtn{background:var(--panel);border-radius:10px;padding:8px 12px;font-size:14px;font-weight:700;color:var(--mute)}
+
+  .btn{display:block;width:100%;padding:16px;border-radius:16px;font-size:18px;font-weight:800;
+    background:var(--accent);color:#1a1240;box-shadow:0 4px 0 #7a5fd6;transition:transform .08s, box-shadow .08s}
+  .btn:active{transform:translateY(3px);box-shadow:0 1px 0 #7a5fd6}
+  .btn:disabled{background:#4a4e7a;color:#8a8fbf;box-shadow:0 4px 0 #34385e}
+  .btn.sub{background:var(--panel2);color:var(--text);box-shadow:0 4px 0 #1a1d36;font-size:16px;padding:14px}
+  .btn.sub:active{box-shadow:0 1px 0 #1a1d36}
+  .btn + .btn{margin-top:12px}
+  .row2{display:flex;gap:10px}
+  .row2 .btn{margin-top:0}
+
+  .card{background:var(--panel);border-radius:20px;padding:18px}
+  .grow{flex:1}
+  .center{text-align:center}
+  .mute{color:var(--mute)}
+  .small{font-size:13px}
+  .mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}.mt24{margin-top:24px}
+
+  /* title */
+  .logo{margin:28px 0 22px;text-align:center}
+  .logo .pre{font-size:20px;font-weight:800;color:var(--mute);letter-spacing:.2em}
+  .logo .main{font-size:46px;font-weight:800;line-height:1.1;margin-top:4px}
+  .stripes{display:flex;flex-direction:column;gap:6px;margin:22px auto 0;width:220px}
+  .stripe{display:flex;align-items:center;gap:8px}
+  .stripe b{width:38px;height:30px;border-radius:8px;display:grid;place-items:center;color:#1a1a2e;font-size:16px}
+  .stripe span{flex:1;height:30px;border-radius:8px;background:var(--panel2)}
+  details.rules{background:var(--panel);border-radius:16px;padding:14px 16px;margin-top:16px}
+  details.rules summary{font-weight:800;cursor:pointer;list-style:none}
+  details.rules summary::before{content:"▶ ";font-size:11px;color:var(--mute)}
+  details.rules[open] summary::before{content:"▼ "}
+  details.rules ol{padding-left:20px;margin:10px 0 0;line-height:1.7;font-size:14px}
+  details.rules .score{margin-top:10px;font-size:13px;color:var(--mute);line-height:1.7}
+
+  /* setup */
+  .sec-title{font-size:15px;font-weight:800;margin:18px 0 10px;color:var(--mute)}
+  .player-input{display:flex;gap:8px;margin-bottom:8px}
+  .player-input input,.field{flex:1;width:100%;background:var(--panel);border:2px solid var(--line);border-radius:12px;
+    padding:12px 14px;font-size:16px;color:var(--text);font-family:inherit;outline:none}
+  .player-input input:focus,.field:focus{border-color:var(--accent)}
+  .player-input .del{width:46px;border-radius:12px;background:var(--panel);font-size:18px;color:var(--mute)}
+  .addbtn{width:100%;padding:12px;border-radius:12px;background:transparent;border:2px dashed var(--line);color:var(--mute);font-weight:700;font-size:15px}
+  .seg{display:flex;background:var(--panel);border-radius:12px;padding:4px;gap:4px}
+  .seg button{flex:1;padding:10px;border-radius:9px;background:transparent;font-weight:800;color:var(--mute);font-size:15px}
+  .seg button.on{background:var(--accent);color:#1a1240}
+
+  .modes{display:flex;flex-direction:column;gap:8px}
+  .mode-opt{display:flex;align-items:center;gap:12px;text-align:left;background:var(--panel);border:2px solid var(--line);
+    border-radius:14px;padding:12px 14px;color:var(--text)}
+  .mode-opt .mi{font-size:26px}
+  .mode-opt b{display:block;font-size:16px}
+  .mode-opt small{display:block;font-size:12px;color:var(--mute);margin-top:2px}
+  .mode-opt.on{border-color:var(--accent);background:#b197fc1a}
+  .mode-opt.on b{color:var(--accent)}
+
+  /* topic */
+  .host-tag{display:inline-block;background:#ffd43b22;color:var(--B);padding:6px 14px;border-radius:999px;font-weight:800;font-size:15px}
+  .odai-label{font-size:13px;color:var(--mute);font-weight:800;letter-spacing:.1em}
+  .odai{font-size:28px;font-weight:800;line-height:1.3;margin-top:4px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .chip{background:var(--panel2);padding:8px 12px;border-radius:10px;font-weight:700;font-size:15px}
+  .hint{background:#b197fc1a;border-radius:12px;padding:10px 12px;font-size:13px;color:#d0c3ff;line-height:1.6}
+
+  /* pass */
+  .pass{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:14px;padding:20px 0}
+  .pass .phone{font-size:64px;animation:wiggle 1.6s ease-in-out infinite}
+  @keyframes wiggle{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+  .pass .who{font-size:34px;font-weight:800;line-height:1.3}
+  .pass .who small{display:block;font-size:18px;color:var(--mute);font-weight:700}
+  .pass .btn{margin-top:18px}
+
+  /* tiers */
+  .tiers{display:flex;flex-direction:column;gap:8px}
+  .tier-row{display:flex;gap:8px;align-items:stretch}
+  .tl{width:54px;min-height:56px;border-radius:12px;display:grid;place-items:center;font-size:24px;font-weight:800;color:#1a1a2e;flex-shrink:0}
+  .tl.S{background:var(--S)}.tl.A{background:var(--A)}.tl.B{background:var(--B)}.tl.C{background:var(--C)}.tl.D{background:var(--D)}
+  .slot{flex:1;min-height:56px;border-radius:12px;background:var(--panel);border:2px dashed var(--line);
+    font-size:17px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:6px 10px;text-align:center;color:var(--mute)}
+  .slot.filled{border:2px solid transparent;background:var(--panel2);color:var(--text)}
+  .slot.filled::after{content:"×";margin-left:10px;color:var(--mute);font-size:15px}
+  .slot.target{border:2px solid var(--accent);color:var(--accent);background:#b197fc14;animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 #b197fc55}50%{box-shadow:0 0 0 5px #b197fc00}}
+  .pool{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;min-height:56px;align-items:center;margin-top:16px;
+    background:#0e1022;border-radius:16px;padding:14px}
+  .pick{background:#fff;color:#1a1a2e;padding:12px 16px;border-radius:12px;font-size:17px;font-weight:800;box-shadow:0 3px 0 #b8bce0}
+  .pick:active{transform:translateY(2px);box-shadow:0 1px 0 #b8bce0}
+  .arr-head{margin-bottom:14px}
+  .arr-head .odai{font-size:22px}
+  .arr-head .who{font-size:13px;font-weight:800;color:var(--B)}
+  .updown{display:flex;justify-content:space-between;font-size:12px;color:var(--mute);margin:0 2px 6px 62px}
+
+  /* reveal */
+  .rv-item{flex:1;min-height:56px;border-radius:12px;background:var(--panel2);display:flex;flex-direction:column;justify-content:center;padding:8px 12px}
+  .rv-item.hidden{background:var(--panel);border:2px dashed var(--line);align-items:center;font-size:24px;color:var(--line);font-weight:800}
+  .rv-item.pop{animation:pop .45s cubic-bezier(.2,1.6,.4,1)}
+  @keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
+  .rv-name{font-size:18px;font-weight:800}
+  .hits{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+  .hit{font-size:11px;font-weight:800;background:#51cf6626;color:var(--good);padding:2px 7px;border-radius:999px}
+  .nohit{font-size:11px;color:var(--mute)}
+  .score-table{width:100%;border-collapse:collapse;margin-top:6px}
+  .score-table td{padding:10px 6px;border-bottom:1px solid var(--line);font-weight:700;font-size:15px}
+  .score-table td.num{text-align:right;white-space:nowrap}
+  .score-table .plus{color:var(--good);font-weight:800}
+  .perfect{color:var(--B);font-size:12px;font-weight:800;margin-left:4px}
+  .talk{background:#ffd43b1a;color:var(--B);border-radius:14px;padding:14px;text-align:center;font-weight:800;line-height:1.5}
+  .guess-list{margin-top:10px;display:flex;flex-direction:column;gap:10px}
+  .gl-name{font-size:13px;font-weight:800;color:var(--mute);margin-bottom:4px}
+  .gl-row{display:flex;gap:4px}
+  .gl-cell{flex:1;border-radius:8px;padding:6px 2px;text-align:center;font-size:11px;font-weight:800;background:var(--panel2);line-height:1.3;word-break:break-all}
+  .gl-cell b{display:block;font-size:10px;opacity:.7}
+  .gl-cell.ok{background:#51cf6633;color:#8ce99a}
+  .gl-cell.near{background:#fcc41926;color:#ffe066}
+  .legend{display:flex;gap:12px;font-size:11px;color:var(--mute);margin-top:8px}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+
+  /* final */
+  .rank{display:flex;align-items:center;gap:12px;background:var(--panel);border-radius:16px;padding:14px 16px;margin-bottom:10px}
+  .rank .pos{font-size:26px;width:40px;text-align:center;font-weight:800}
+  .rank .nm{flex:1;font-size:18px;font-weight:800}
+  .rank .pt{font-size:22px;font-weight:800}
+  .rank .pt small{font-size:13px;color:var(--mute)}
+  .rank.first{background:linear-gradient(135deg,#ffd43b33,#ff6b6b22);border:2px solid #ffd43b88}
+
+  /* modal */
+  .overlay{position:fixed;inset:0;background:#0009;display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}
+  .modal{background:var(--panel);border-radius:20px;padding:20px;width:100%;max-width:400px}
+  .modal h3{font-size:18px;margin-bottom:12px}
+
+  .home-btn{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px;border-radius:18px;
+    background:var(--panel);border:2px solid var(--line);color:var(--text);margin-bottom:12px}
+  .home-btn:active{transform:scale(.98)}
+  .home-btn .mi{font-size:30px}
+  .home-btn b{display:block;font-size:18px}
+  .home-btn small{display:block;font-size:12px;color:var(--mute);margin-top:3px}
+  .home-btn.primary{border-color:var(--accent);background:#b197fc1a}
+  .code-big{font-size:52px;font-weight:800;letter-spacing:.18em;text-align:center;color:var(--B);line-height:1.1}
+  .code-input{font-size:28px !important;letter-spacing:.3em;text-align:center;font-weight:800}
+  .members{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+  .member{display:flex;align-items:center;gap:10px;background:var(--panel2);border-radius:12px;padding:10px 12px;font-weight:800}
+  .member .tag{font-size:11px;padding:2px 8px;border-radius:999px;background:#b197fc33;color:#d0c3ff;font-weight:800}
+  .member .tag.you{background:#51cf6633;color:#8ce99a}
+  .member .st{margin-left:auto;font-size:13px;color:var(--mute)}
+  .member .st.ok{color:var(--good)}
+  .member.away{opacity:.45}
+  .spinner{width:44px;height:44px;border-radius:50%;border:4px solid var(--line);border-top-color:var(--accent);animation:spin 1s linear infinite;margin:0 auto}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .wait{flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center;gap:14px;padding:20px 0}
+  .wait .big{font-size:24px;font-weight:800;line-height:1.4}
+  .banner{background:#ff6b6b22;color:#ffa8a8;border-radius:12px;padding:10px 12px;font-size:13px;font-weight:700;margin-bottom:12px;text-align:center}
+  .or{display:flex;align-items:center;gap:10px;color:var(--mute);font-size:13px;margin:16px 0}
+  .or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+
+  .sugg-title{font-size:12px;color:var(--mute);font-weight:800;margin:10px 0 6px}
+  .sugg{display:block;width:100%;text-align:left;background:#b197fc14;border:1.5px solid #b197fc55;border-radius:12px;padding:9px 12px;margin-bottom:6px;color:var(--text)}
+  .sugg b{display:block;font-size:14px}
+  .sugg span{display:block;font-size:12px;color:var(--mute);margin-top:2px}
+  .sugg:active{transform:scale(.98)}
+  a.iconbtn{display:inline-block;color:var(--mute)}
+  .deadline{font-weight:800;color:var(--B)}
+  .deadline.hurry{color:var(--S)}
+  .linkbtn{background:none;color:var(--accent);font-weight:800;font-size:12px;padding:0 4px;text-decoration:underline}
+  .chip.on{background:var(--accent);color:#1a1240}
+  button.chip{border:none;color:var(--text);font-family:inherit}
+  /* NG word */
+  .ng-me{background:var(--panel);border-radius:18px;padding:14px;text-align:center;border:2px dashed var(--line)}
+  .ng-me .ng-word{font-size:30px;font-weight:800;margin:4px 0;letter-spacing:.1em}
+  .ng-me.out{border:2px solid var(--S);background:#ff6b6b1f}
+  .ng-me.out .ng-word{color:var(--S);letter-spacing:0}
+  .ng-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .ng-card{background:var(--panel2);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:6px;text-align:center}
+  .ng-card .ng-name{font-size:13px;font-weight:800;color:var(--mute)}
+  .ng-card .ng-w{font-size:22px;font-weight:800;color:var(--B);word-break:break-all;line-height:1.25}
+  .ng-card.out{opacity:.5}
+  .ng-card.out .ng-w{text-decoration:line-through;color:var(--mute)}
+  .ng-btn{background:var(--S);color:#fff;border-radius:10px;padding:10px 6px;font-weight:800;font-size:15px;box-shadow:0 3px 0 #c94a4a}
+  .ng-btn:active{transform:translateY(2px);box-shadow:0 1px 0 #c94a4a}
+  .ng-res{display:flex;align-items:center;gap:10px;background:var(--panel);border-radius:14px;padding:12px 14px;margin-bottom:8px}
+  .ng-res .ng-name{font-weight:800;font-size:17px}
+  .ng-res.alive{border:2px solid #51cf6655}
+  /* oekaki */
+  .oe-timer{text-align:center;font-size:20px;font-weight:800;margin-bottom:8px}
+  .oe-prompt{background:var(--panel);border-radius:14px;padding:10px 14px;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .oe-prompt b{font-size:20px}
+  .oe-slot{width:100%;max-width:440px;margin:0 auto}
+  .oe-canvas{display:block;width:100%;aspect-ratio:1/1;height:auto;border-radius:14px;background:#fff;touch-action:none;cursor:crosshair}
+  .oe-view{display:block;width:100%;max-width:440px;aspect-ratio:1/1;height:auto;margin:0 auto;border-radius:14px;background:#fff}
+  .oe-tools{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+  .oe-colors,.oe-sizes{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+  .oe-col{width:36px;height:36px;border-radius:50%;border:3px solid transparent;font-size:16px}
+  .oe-col.on{border-color:var(--accent);transform:scale(1.12)}
+  .oe-size{min-width:44px;height:40px;border-radius:10px;background:var(--panel2);display:grid;place-items:center;font-size:18px;border:2px solid transparent}
+  .oe-size i{display:block;border-radius:50%;background:var(--text)}
+  .oe-size.on{border-color:var(--accent)}
+  .oe-item{background:var(--panel);border-radius:16px;padding:12px}
+  .oe-who{font-size:12px;font-weight:800;color:var(--mute);margin-bottom:6px}
+  .oe-text{font-size:22px;font-weight:800;text-align:center;padding:6px 0}
+  .oe-arrow{text-align:center;color:var(--mute);font-size:18px;margin:4px 0}
+  /* itchi */
+  .it-groups{display:flex;flex-direction:column;gap:8px}
+  .it-group{display:grid;grid-template-columns:1fr auto;gap:4px 10px;text-align:left;background:var(--panel);border:2px solid transparent;border-radius:14px;padding:12px 14px;color:var(--text);font-family:inherit}
+  .it-group.hit{border-color:#51cf6688;background:#51cf6614}
+  .it-group.sel{border-color:var(--accent);background:#b197fc22}
+  .it-ans{font-size:20px;font-weight:800}
+  .it-count{font-size:18px;font-weight:800;color:var(--B);align-self:center}
+  .it-names{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px}
+  /* hub */
+  .game-card{display:flex;align-items:center;gap:14px;background:var(--panel);border:2px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px;color:var(--text);text-decoration:none}
+  .game-card:active{transform:scale(.98)}
+  .game-card .ge{font-size:40px;width:52px;text-align:center}
+  .game-card b{display:block;font-size:19px}
+  .game-card small{display:block;color:var(--mute);font-size:12px;margin-top:3px;line-height:1.5}
+  .game-card .pp{font-size:11px;color:#d0c3ff;margin-top:4px;font-weight:800}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="peerjs.min.js"></script>
+<script>
+/* Phone-to-phone rooms over WebRTC (PeerJS). Star topology: the room host's peer id is
+   derived from the room code; every other phone connects to it. Presence is sent as
+   patches (only changed top-level keys travel), so large values such as drawings are
+   sent once instead of on every update. */
+window.PeerRoom2 = (() => {
+  const OPTS = window.__PEER_OPTS || { debug: 0 };
+  const HB = 2500, STALE = 12000;
+  const clone = v => JSON.parse(JSON.stringify(v));
+  function applyPatch(obj, d){ for (const k in d) { if (d[k] === null) delete obj[k]; else obj[k] = d[k]; } }
+  function entry(peer, presence, me){ return { peer, presence: presence || {}, sameTab: peer === me, isMe: peer === me, kind: 'viewer' }; }
+  const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
+
+  function join(prefix, code, asHost){
+    return new Promise((resolve, reject) => {
+      const hostId = prefix + code;
+      const peer = asHost ? new Peer(hostId, OPTS) : new Peer(OPTS);
+      let me = null, mine = {}, handlers = [], snapshot = Object.freeze([]), closed = false, settled = false;
+      const clients = new Map();          // host side: id -> {conn, presence, last}
+      let hostConn = null, others = new Map(), lastHost = 0, retry = null; // client side
+      let queued = false;
+
+      const api = {
+        presence(patch){
+          const d = clone(patch); applyPatch(mine, d);
+          if (asHost) sendAll({ t: 'patch', peer: me, d });
+          else if (hostConn && hostConn.open) safeSend(hostConn, { t: 'patch', d });
+          notify();
+          return Promise.resolve();
+        },
+        peers(){ return snapshot; },
+        onPeers(h){ handlers.push(h); notify(); return () => { handlers = handlers.filter(x => x !== h); }; },
+        connected(){ return asHost ? true : !!(hostConn && hostConn.open); },
+        myId(){ return me; },
+        leave(){ closed = true; clearInterval(timer); clearTimeout(retry); try { peer.destroy(); } catch(e) {} return Promise.resolve(); }
+      };
+      function safeSend(conn, msg){ try { conn.send(msg); } catch(e) {} }
+      function sendAll(msg, except){ clients.forEach((c, id) => { if (id !== except && c.conn.open) safeSend(c.conn, msg); }); }
+      function notify(){
+        if (queued) return; queued = true;
+        setTimeout(() => {
+          queued = false; if (closed) return;
+          const list = [entry(me, mine, me)];
+          if (asHost) clients.forEach((c, id) => { if (c.conn.open) list.push(entry(id, c.presence, me)); });
+          else others.forEach((p, id) => { if (id !== me) list.push(entry(id, p, me)); });
+          snapshot = Object.freeze(list);
+          const ch = { peers: snapshot };
+          handlers.slice().forEach(h => { try { h(ch); } catch(e) { console.error(e); } });
+        }, 0);
+      }
+
+      /* host */
+      if (asHost) {
+        peer.on('connection', conn => {
+          conn.on('open', () => {
+            const old = clients.get(conn.peer);
+            if (old && old.conn !== conn) { try { old.conn.close(); } catch(e) {} }
+            clients.set(conn.peer, { conn, presence: {}, last: Date.now() });
+            const peersList = [{ peer: me, presence: mine }];
+            clients.forEach((c, id) => { if (id !== conn.peer && c.conn.open) peersList.push({ peer: id, presence: c.presence }); });
+            safeSend(conn, { t: 'snap', peers: peersList });
+            notify();
+          });
+          conn.on('data', msg => {
+            const c = clients.get(conn.peer); if (!c || c.conn !== conn || !msg) return;
+            c.last = Date.now();
+            if (msg.t === 'full' && isObj(msg.p)) { c.presence = msg.p; sendAll({ t: 'set', peer: conn.peer, p: msg.p }, conn.peer); notify(); }
+            else if (msg.t === 'patch' && isObj(msg.d)) { applyPatch(c.presence, msg.d); sendAll({ t: 'patch', peer: conn.peer, d: msg.d }, conn.peer); notify(); }
+          });
+          const drop = () => { const c = clients.get(conn.peer); if (c && c.conn === conn) { clients.delete(conn.peer); sendAll({ t: 'leave', peer: conn.peer }); notify(); } };
+          conn.on('close', drop); conn.on('error', drop);
+        });
+      }
+
+      /* client */
+      function connectHost(){
+        if (closed || peer.destroyed) return;
+        clearTimeout(retry);
+        const conn = peer.connect(hostId, { reliable: true });
+        hostConn = conn;
+        conn.on('open', () => {
+          if (hostConn !== conn) return;
+          lastHost = Date.now();
+          safeSend(conn, { t: 'full', p: mine });
+          if (!settled) { settled = true; resolve(api); }
+        });
+        conn.on('data', msg => {
+          if (hostConn !== conn || !msg) return;
+          lastHost = Date.now();
+          if (msg.t === 'snap' && Array.isArray(msg.peers)) { others = new Map(); msg.peers.forEach(p => { if (p && typeof p.peer === 'string') others.set(p.peer, isObj(p.presence) ? p.presence : {}); }); notify(); }
+          else if (msg.t === 'set' && typeof msg.peer === 'string' && isObj(msg.p)) { others.set(msg.peer, msg.p); notify(); }
+          else if (msg.t === 'patch' && typeof msg.peer === 'string' && isObj(msg.d)) { const p = others.get(msg.peer) || {}; applyPatch(p, msg.d); others.set(msg.peer, p); notify(); }
+          else if (msg.t === 'leave' && typeof msg.peer === 'string') { others.delete(msg.peer); notify(); }
+        });
+        const lost = () => { if (hostConn !== conn) return; hostConn = null; others = new Map(); notify(); scheduleRetry(); };
+        conn.on('close', lost); conn.on('error', lost);
+      }
+      function scheduleRetry(){
+        if (closed) return;
+        clearTimeout(retry);
+        retry = setTimeout(() => {
+          if (peer.disconnected && !peer.destroyed) { try { peer.reconnect(); } catch(e) {} }
+          connectHost();
+        }, 2500);
+      }
+
+      peer.on('open', id => { me = id; if (asHost) { settled = true; resolve(api); notify(); } else connectHost(); });
+      peer.on('disconnected', () => { if (!closed && !peer.destroyed) setTimeout(() => { try { peer.reconnect(); } catch(e) {} }, 1000); });
+      peer.on('error', err => {
+        const type = err && err.type;
+        if (!settled) {
+          settled = true; closed = true; clearInterval(timer);
+          try { peer.destroy(); } catch(e) {}
+          reject({ code: type === 'unavailable-id' ? 'taken' : type === 'peer-unavailable' ? 'no_host'
+            : (type === 'network' || type === 'server-error' || type === 'socket-error') ? 'network' : (type || 'error') });
+          return;
+        }
+        if (!asHost && type === 'peer-unavailable') scheduleRetry();
+      });
+      const timer = setInterval(() => {
+        if (closed) return;
+        const now = Date.now();
+        if (asHost) {
+          clients.forEach((c, id) => { if (now - c.last > STALE) { try { c.conn.close(); } catch(e) {} clients.delete(id); sendAll({ t: 'leave', peer: id }); notify(); } });
+          sendAll({ t: 'hb' });
+        } else if (hostConn && hostConn.open) {
+          safeSend(hostConn, { t: 'hb' });
+          if (now - lastHost > STALE) { try { hostConn.close(); } catch(e) {} hostConn = null; others = new Map(); notify(); scheduleRetry(); }
+        }
+      }, HB);
+      document.addEventListener('visibilitychange', () => {
+        if (closed || document.visibilityState !== 'visible') return;
+        if (peer.disconnected && !peer.destroyed) { try { peer.reconnect(); } catch(e) {} }
+        if (!asHost && !(hostConn && hostConn.open)) connectHost();
+      });
+      setTimeout(() => { if (!settled) { settled = true; closed = true; clearInterval(timer); try { peer.destroy(); } catch(e) {} reject({ code: 'timeout' }); } }, 15000);
+    });
+  }
+  return { join };
+})();
+
+</script>
+<script>
+/* Shared room / lobby / menu framework for the online party games.
+   One player (the room host, "GM") keeps the authoritative game state G in their
+   presence. Everyone else only publishes their own inputs in their presence; the GM
+   folds them into G with game.fold(). */
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rid = () => Math.random().toString(36).slice(2, 8);
+const pick = a => a[Math.floor(Math.random() * a.length)];
+function shuffle(a){ a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function lsGet(k){ try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch(e) { return null; } }
+function lsSet(k, v){ try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
+const cleanStr = (s, n) => typeof s === 'string' ? s.replace(/[\u0000-\u001f]/g, '').trim().slice(0, n) : '';
+
+const Party = (() => {
+  const app = document.getElementById('app');
+  let GAME = null, LS = '';
+  const O = { status:'idle', room:null, unsub:null, code:'', name:'', joinCode:'', isGM:false, G:null, peers:[],
+    my:{}, joinedAt:0, lastGM:0, err:'', modal:null, ui:{} };
+
+  /* ---------- presence helpers ---------- */
+  const myPeer = () => (O.peers.find(p => p.sameTab) || {}).peer || (O.room && O.room.myId && O.room.myId()) || null;
+  function presOf(peer){
+    if (peer && peer === myPeer()) return O.my;
+    const p = O.peers.find(x => x.peer === peer);
+    return (p && p.presence) || null;
+  }
+  function setP(patch){
+    for (const k in patch) { if (patch[k] === null) delete O.my[k]; else O.my[k] = patch[k]; }
+    if (O.room) O.room.presence(patch).catch(() => {});
+  }
+  function presentSet(){ const s = new Set(O.peers.map(p => p.peer)); const me = myPeer(); if (me) s.add(me); return s; }
+  function ctx(){
+    const G = O.G, me = myPeer();
+    const myIdx = G && G.pl ? G.pl.findIndex(p => p.p === me) : -1;
+    return { G, me, myIdx, isGM: O.isGM, my: O.my, ui: O.ui, presOf, present: presentSet(), setP, gm: gmChange,
+      render, key: G ? G.gid + '-' + G.ri : '', playerPres: i => (G && G.pl[i] && presentSet().has(G.pl[i].p)) ? presOf(G.pl[i].p) : null };
+  }
+
+  /* ---------- connection ---------- */
+  function saveOnline(){
+    const s = lsGet(LS) || {};
+    s.name = O.name; s.code = O.code || O.joinCode;
+    if (O.isGM && O.G) s.gm = { code: O.code, G: O.G, t: Date.now() };
+    lsSet(LS, s);
+  }
+  async function enterRoom(code, asGM, restoreG){
+    O.status = 'connecting'; O.err = ''; render();
+    if (!window.PeerRoom2 || !window.Peer) { O.status = 'error'; O.err = 'network'; render(); return; }
+    let room = null, lastErr = null;
+    for (let attempt = 0; attempt < (restoreG ? 8 : 4); attempt++) {
+      try { room = await PeerRoom2.join(GAME.prefix, code, asGM); break; }
+      catch(e) {
+        lastErr = (e && e.code) || 'error';
+        if (lastErr === 'taken' && asGM && !restoreG) { code = String(Math.floor(1000 + Math.random() * 9000)); continue; }
+        if (lastErr === 'taken' && restoreG) { await new Promise(r => setTimeout(r, 2500)); continue; }
+        break;
+      }
+    }
+    if (!room) { O.status = 'error'; O.err = lastErr; render(); return; }
+    O.room = room; O.code = code; O.isGM = asGM; O.status = 'in'; O.my = {}; O.ui = {};
+    O.G = asGM ? (restoreG || newG()) : null;
+    O.joinedAt = Date.now(); O.lastGM = 0;
+    O.peers = room.peers();
+    O.unsub = room.onPeers(ch => { O.peers = ch.peers; onRoomChange(); });
+    setP({ n: O.name, gm: asGM ? true : null, g: asGM ? O.G : null });
+    saveOnline(); keepAwake(); onRoomChange();
+  }
+  async function leaveRoom(){
+    const r = O.room;
+    if (O.unsub) try { O.unsub(); } catch(e) {}
+    O.room = null; O.unsub = null; O.status = 'idle'; O.G = null; O.my = {}; O.peers = []; O.modal = null; O.ui = {};
+    if (O.isGM) { const s = lsGet(LS) || {}; delete s.gm; lsSet(LS, s); }
+    O.isGM = false;
+    if (r) try { await r.leave(); } catch(e) {}
+    render();
+  }
+  let wakeLock = null;
+  async function keepAwake(){
+    try { if (navigator.wakeLock && !wakeLock && document.visibilityState === 'visible') { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } } catch(e) {}
+  }
+  document.addEventListener('visibilitychange', () => { if (O.status === 'in') keepAwake(); });
+
+  function newG(prev){
+    return { gid: rid(), ph: 'lobby', cfg: prev ? prev.cfg : GAME.defaultCfg(), pl: [], ri: 0, v: prev ? prev.v + 1 : 0, s: {} };
+  }
+  function onRoomChange(){
+    if (O.status !== 'in') return;
+    if (O.isGM) gmTick();
+    else {
+      const gm = O.peers.find(p => !p.sameTab && p.presence && p.presence.gm === true && p.presence.g && typeof p.presence.g === 'object');
+      if (gm) { O.G = gm.presence.g; O.lastGM = Date.now(); }
+      else if (O.G && Date.now() - O.lastGM > 6000) O.G = null;
+    }
+    if (O.G && GAME.effects) { try { GAME.effects(ctx()); } catch(e) { console.error(e); } }
+    render();
+  }
+
+  /* ---------- GM ---------- */
+  const seen = {}; let seenN = 0;
+  function gmTick(){
+    const G = O.G; if (!G) return;
+    const before = JSON.stringify(G);
+    const me = myPeer(), present = presentSet();
+    const named = O.peers.map(p => ({ p: p.peer, n: cleanStr((p.sameTab ? O.my : (p.presence || {})).n, 10) })).filter(x => x.n);
+    if (me && !named.find(x => x.p === me)) named.push({ p: me, n: O.name });
+    if (G.ph === 'lobby') {
+      named.forEach(x => { if (!(x.p in seen)) seen[x.p] = seenN++; });
+      named.sort((a, b) => a.p === me ? -1 : b.p === me ? 1 : seen[a.p] - seen[b.p]);
+      G.pl = named.slice(0, GAME.maxPlayers).map(x => ({ p: x.p, n: x.n, s: 0 }));
+    } else {
+      const bound = new Set(G.pl.map(x => x.p).filter(p => present.has(p)));
+      G.pl.forEach(pl => {
+        if (present.has(pl.p)) return;
+        const m = named.find(x => x.n === pl.n && !bound.has(x.p));
+        if (m) { pl.p = m.p; bound.add(m.p); }
+      });
+      try { GAME.fold(G, ctx()); } catch(e) { console.error(e); }
+    }
+    if (JSON.stringify(G) !== before) { G.v++; setP({ g: G }); saveOnline(); }
+  }
+  function gmChange(fn){
+    if (!O.isGM || !O.G) return;
+    fn(O.G); O.G.v++; setP({ g: O.G }); gmTick(); saveOnline();
+    if (GAME.effects) { try { GAME.effects(ctx()); } catch(e) { console.error(e); } }
+    render();
+  }
+
+  /* ---------- shared UI ---------- */
+  function topbar(){
+    const G = O.G;
+    const extra = G && G.ph !== 'lobby' && GAME.roundLabel ? GAME.roundLabel(G) : '';
+    return `<div class="topbar"><div class="info">${GAME.emoji} 部屋 ${esc(O.code)}${extra ? '　' + esc(extra) : ''}</div>
+      <button class="iconbtn" data-a="p-menu">≡ メニュー</button></div>`;
+  }
+  function memberList(G, statusFn){
+    const me = myPeer(), present = presentSet();
+    return `<div class="members">${G.pl.map((pl, i) => {
+      const away = G.ph !== 'lobby' && !present.has(pl.p);
+      const st = statusFn ? (statusFn(pl, i) || {}) : {};
+      return `<div class="member ${away ? 'away' : ''}">${esc(pl.n)}
+        ${i === 0 && G.ph === 'lobby' ? '<span class="tag">ホスト</span>' : ''}
+        ${pl.p === me ? '<span class="tag you">あなた</span>' : ''}
+        <span class="st ${st.ok ? 'ok' : ''}">${away ? '離席中' : esc(st.t || '')}</span></div>`;
+    }).join('')}</div>`;
+  }
+  function rankList(players){ // [{name, score, you}]
+    const sorted = players.map(p => ({ ...p })).sort((a, b) => b.score - a.score);
+    let pos = 0, prev = null;
+    return sorted.map((p, k) => { if (p.score !== prev) { pos = k + 1; prev = p.score; } return { ...p, pos }; });
+  }
+  function finalBlock(G){
+    const me = myPeer();
+    const r = rankList(G.pl.map(p => ({ name: p.n, score: p.s, you: p.p === me })));
+    const medal = p => p === 1 ? '🥇' : p === 2 ? '🥈' : p === 3 ? '🥉' : p;
+    const winners = r.filter(p => p.pos === 1).map(p => esc(p.name)).join('さん・');
+    return `<div class="logo" style="margin:20px 0 10px"><div class="pre">結果発表</div>
+        <div class="main" style="font-size:32px">🏆 ${winners}さん<br><span style="font-size:22px">の優勝！</span></div></div>
+      <div class="mt16">${r.map(p => `<div class="rank ${p.pos === 1 ? 'first' : ''}">
+        <div class="pos">${medal(p.pos)}</div><div class="nm">${esc(p.name)}${p.you ? ' <span class="small mute">(あなた)</span>' : ''}</div>
+        <div class="pt">${p.score}<small> 点</small></div></div>`).join('')}</div>`;
+  }
+  const waitBlock = (text, sub) => `<div class="wait" style="flex:0"><div class="spinner"></div><div class="big" style="font-size:18px">${text}</div>${sub ? `<p class="mute">${sub}</p>` : ''}</div>`;
+  const deadlineSpan = ms => `<span class="deadline" data-deadline="${ms}"></span>`;
+  function segButtons(action, cur, opts){ // opts: [[value,label],...]
+    return `<div class="seg">${opts.map(([v, l]) => `<button class="${String(cur) === String(v) ? 'on' : ''}" data-a="${action}" data-v="${v}">${l}</button>`).join('')}</div>`;
+  }
+  function modeButtons(action, cur, opts){ // [[value, emoji, title, sub]]
+    return `<div class="modes">${opts.map(([v, e, t, s]) => `<button class="mode-opt ${cur === v ? 'on' : ''}" data-a="${action}" data-v="${v}">
+      <span class="mi">${e}</span><span><b>${t}</b><small>${s}</small></span></button>`).join('')}</div>`;
+  }
+
+  /* ---------- views ---------- */
+  function vEntry(){
+    const s = lsGet(LS) || {};
+    const gm = s.gm && s.gm.G && Date.now() - s.gm.t < 6 * 3600e3 ? s.gm : null;
+    return `<div class="topbar"><a class="iconbtn" href="./" style="text-decoration:none">← ゲーム一覧</a><div></div></div>
+      <div class="logo" style="margin:10px 0 18px"><div style="font-size:54px">${GAME.emoji}</div>
+        <div class="main" style="font-size:34px">${GAME.title}</div></div>
+      <p class="center mute small">${GAME.tagline}</p>
+      <div class="sec-title">あなたの名前</div>
+      <input class="field" id="p-name" value="${esc(O.name)}" maxlength="10" placeholder="例：たろう" autocomplete="off">
+      <p class="small mt8" style="color:var(--S);min-height:18px">${esc(O.errMsg || '')}</p>
+      <button class="btn" data-a="p-create">部屋を作る</button>
+      <div class="or">または</div>
+      <input class="field code-input" id="p-code" value="${esc(O.joinCode)}" maxlength="4" inputmode="numeric" placeholder="0000" autocomplete="off">
+      <button class="btn sub mt12" data-a="p-join">部屋番号を入れて参加</button>
+      ${gm ? `<button class="btn sub" data-a="p-restore">部屋 ${esc(gm.code)} にホストとして戻る</button>` : ''}
+      <details class="rules"><summary>あそびかた</summary>${GAME.rules}</details>
+      <div class="hint mt16">部屋を作った人がホストです。ホストに出る<b>4桁の部屋番号</b>を、ほかの人が入力して参加します。${GAME.minPlayers}人から遊べます。<br>${GAME.callHint ? GAME.callHint + '<br>' : ''}ホストはゲーム中、このページを開いたままにしてね。</div>`;
+  }
+  function vStatus(){
+    if (O.status === 'connecting') return `<div class="wait"><div class="spinner"></div><div class="big">接続中…</div></div>`;
+    const t = { no_host: '部屋が見つかりませんでした。<br>部屋番号が合っているか、ホストがページを開いているか確認してね。',
+      timeout: '時間内につながりませんでした。<br>電波の良いところで、もう一度ためしてね。',
+      taken: '部屋を作れませんでした。<br>少し待ってから、もう一度ためしてね。',
+      network: 'サーバーにつながりませんでした。<br>インターネット接続を確認してね。' };
+    return `<div class="wait"><div style="font-size:48px">📡</div><div style="line-height:1.7">${t[O.err] || `接続できませんでした。<br><span class="small mute">(${esc(O.err)})</span>`}</div>
+      <button class="btn" data-a="p-back">もどる</button></div>`;
+  }
+  function vLobby(G){
+    const n = G.pl.length, c = ctx();
+    return `${topbar()}
+      <div class="card center"><div class="odai-label">部屋番号</div><div class="code-big mt8">${esc(O.code)}</div>
+        <p class="mute small mt8">この番号をみんなに伝えて参加してもらおう</p></div>
+      <div class="sec-title">参加メンバー（${n}人）</div>
+      ${memberList(G)}
+      ${O.isGM ? `${GAME.settingsView(G, c)}
+        <div class="grow"></div>
+        <button class="btn mt24" data-a="p-start" ${n < GAME.minPlayers ? 'disabled' : ''}>${n < GAME.minPlayers ? `${GAME.minPlayers}人以上集まったらスタート` : 'ゲームスタート'}</button>`
+      : `<div class="card mt16 small mute">${GAME.settingsSummary(G)}</div>
+        <div class="grow"></div>${waitBlock('ホストがスタートするのを待っています')}`}`;
+  }
+  function html(){
+    if (O.status === 'idle') return vEntry();
+    if (O.status !== 'in') return vStatus();
+    const G = O.G;
+    if (!G) {
+      const late = Date.now() - O.joinedAt > 7000;
+      return `${topbar()}<div class="wait">${late ? '<div style="font-size:48px">🔍</div>' : '<div class="spinner"></div>'}
+        <div class="big">${late ? 'ホストが見つかりません' : '部屋に接続しています…'}</div>
+        ${late ? `<p class="mute">ホストがこのページを開いているか確認してね</p><button class="btn sub" data-a="p-leave">もどる</button>` : ''}</div>`;
+    }
+    const banner = !O.isGM && O.lastGM && Date.now() - O.lastGM > 4000 ? `<div class="banner">ホストとの接続が途切れています…</div>` : '';
+    if (G.ph === 'lobby') return banner + vLobby(G);
+    return banner + topbar() + GAME.view(ctx());
+  }
+  function modalHtml(){
+    if (!O.modal) return '';
+    const G = O.G;
+    const box = inner => `<div class="overlay" data-a="p-close"><div class="modal" data-stop>${inner}</div></div>`;
+    if (O.modal === 'menu') {
+      const scores = GAME.hasScores && G && G.pl && G.ph !== 'lobby'
+        ? `<h3>現在のスコア</h3><table class="score-table">${rankList(G.pl.map(p => ({ name: p.n, score: p.s }))).map(p => `<tr><td>${p.pos}位　${esc(p.name)}</td><td class="num">${p.score} 点</td></tr>`).join('')}</table>`
+        : `<h3>メニュー</h3>`;
+      const gmBtns = O.isGM && G && G.ph !== 'lobby'
+        ? `${GAME.gmMenu ? GAME.gmMenu(ctx()) : ''}<button class="btn sub mt12" data-a="p-askLobby">ロビーにもどる</button>` : '';
+      return box(`${scores}${gmBtns}<button class="btn sub mt12" data-a="p-askLeave">部屋から退出する</button><button class="btn mt12" data-a="p-close">閉じる</button>`);
+    }
+    if (typeof O.modal === 'object') { // {title, sub, ok, okLabel}
+      const m = O.modal;
+      return box(`<h3>${m.title}</h3><p class="mute small">${m.sub || ''}</p>
+        <div class="row2 mt16"><button class="btn sub" data-a="p-close">もどる</button>
+        <button class="btn" style="background:var(--S);box-shadow:0 4px 0 #c94a4a" data-a="${m.ok}" ${m.data ? `data-v="${esc(m.data)}"` : ''}>${m.okLabel}</button></div>`);
+    }
+    return '';
+  }
+  function confirm(title, sub, ok, okLabel, data){ O.modal = { title, sub, ok, okLabel, data }; render(); }
+
+  let lastHtml = '';
+  function render(){
+    const ae = document.activeElement, fid = ae && ae.id;
+    let ss = null, se = null; try { ss = ae.selectionStart; se = ae.selectionEnd; } catch(e) {}
+    let h;
+    try { h = html(); } catch(e) { console.error(e); h = `<div class="wait"><div class="big">表示できませんでした</div><button class="btn" data-a="p-leave">もどる</button></div>`; }
+    h += modalHtml();
+    if (h !== lastHtml) {
+      const keep = {};
+      app.querySelectorAll('[data-keep]').forEach(el => { if (el.id) keep[el.id] = el.value; });
+      app.innerHTML = h; lastHtml = h;
+      for (const id in keep) { const el = document.getElementById(id); if (el && el.hasAttribute('data-keep')) el.value = keep[id]; }
+      if (fid) { const el = document.getElementById(fid); if (el) { el.focus(); try { el.setSelectionRange(ss, se); } catch(e) {} } }
+      tick();
+    }
+    if (GAME.afterRender && O.G) { try { GAME.afterRender(ctx()); } catch(e) { console.error(e); } }
+  }
+  function tick(){
+    const now = Date.now();
+    app.querySelectorAll('[data-deadline]').forEach(el => {
+      const left = Math.max(0, Math.ceil((+el.dataset.deadline - now) / 1000));
+      const t = left >= 60 ? `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}` : `${left}秒`;
+      if (el.textContent !== t) el.textContent = t;
+      el.classList.toggle('hurry', left <= 10);
+    });
+    if (O.status === 'in' && O.G && GAME.onTick) { try { GAME.onTick(ctx()); } catch(e) { console.error(e); } }
+  }
+
+  /* ---------- events ---------- */
+  function start(game){
+    GAME = game; LS = 'minna-party-' + game.id;
+    const s = lsGet(LS) || lsGet('minna-tier-online') || {};
+    O.name = s.name || ''; O.joinCode = (lsGet(LS) || {}).code || '';
+    app.addEventListener('input', e => {
+      const t = e.target;
+      if (t.id === 'p-name') O.name = t.value;
+      else if (t.id === 'p-code') { t.value = t.value.replace(/\D/g, '').slice(0, 4); O.joinCode = t.value; }
+      else if (GAME.onInput && O.G) GAME.onInput(e, ctx());
+    });
+    app.addEventListener('click', e => {
+      const el = e.target.closest('[data-a]'); if (!el) return;
+      if (el.dataset.a === 'p-close' && e.target.closest('[data-stop]') && !e.target.closest('button')) return;
+      const a = el.dataset.a;
+      switch (a) {
+        case 'p-create': case 'p-join': case 'p-restore': {
+          O.name = ((document.getElementById('p-name') || {}).value || O.name).trim();
+          if (!O.name) { O.errMsg = '名前を入力してください'; render(); return; }
+          O.errMsg = '';
+          if (a === 'p-join') {
+            if (!/^\d{4}$/.test(O.joinCode || '')) { O.errMsg = '4桁の部屋番号を入力してください'; render(); return; }
+            enterRoom(O.joinCode, false);
+          } else if (a === 'p-restore') { const s = lsGet(LS) || {}; if (s.gm) enterRoom(s.gm.code, true, s.gm.G); }
+          else enterRoom(String(Math.floor(1000 + Math.random() * 9000)), true);
+          return;
+        }
+        case 'p-back': O.status = 'idle'; render(); return;
+        case 'p-menu': O.modal = 'menu'; render(); return;
+        case 'p-close': O.modal = null; render(); return;
+        case 'p-askLeave': confirm('部屋から退出しますか？', O.isGM ? 'あなたはホストなので、退出するとゲームが終わります。' : 'あとで同じ部屋番号と名前で戻れます。', 'p-leave', '退出する'); return;
+        case 'p-leave': leaveRoom(); return;
+        case 'p-askLobby': confirm('ロビーにもどりますか？', '今のゲームは終了します。', 'p-lobby', 'もどる'); return;
+        case 'p-lobby': O.modal = null; gmChange(G => { Object.assign(G, newG(G)); }); return;
+        case 'p-start': gmChange(G => {
+          if (G.pl.length < GAME.minPlayers) return;
+          G.pl.forEach(p => p.s = 0); G.gid = rid(); G.ri = 0; G.s = {};
+          GAME.onStart(G, ctx());
+        }); return;
+        case 'p-again': gmChange(G => { G.pl.forEach(p => p.s = 0); G.gid = rid(); G.ri = 0; G.s = {}; GAME.onStart(G, ctx()); }); return;
+      }
+      if (GAME.actions && GAME.actions[a] && O.status === 'in') { O.modal = null; GAME.actions[a](el, ctx(), e); }
+    });
+    setInterval(tick, 500);
+    setInterval(() => { if (O.status === 'in') { if (!O.isGM) onRoomChange(); else render(); } }, 2000);
+    render();
+  }
+  return { start, ctx, render, memberList, finalBlock, waitBlock, deadlineSpan, segButtons, modeButtons, confirm, rankList, O };
+})();
+
+const OE_PROMPTS = ['空を飛ぶペンギン','ラーメンを食べる猫','雪だるま','サンタクロース','宇宙人','お化け屋敷','忍者','ロボット','恐竜の散歩','海賊船',
+  'ハンバーガー','誕生日ケーキ','満員電車','花火大会','おばあちゃんの家','寝坊した朝','運動会','温泉に入るサル','王様','魔法使い',
+  'キャンプファイヤー','ジェットコースター','サッカーの試合','カラオケ','ピラミッド','富士山','東京タワー','雨の日の通学','逆立ちするゾウ','踊るブロッコリー',
+  '怒っているお母さん','授業中の居眠り','冷蔵庫をあさる人','虫歯','宝くじが当たった人','迷子の子ども','スーパーヒーロー','タコの料理人','ゾンビ','UFO',
+  '自転車に乗るクマ','パンダの赤ちゃん','カブトムシ','バナナの皮ですべる人','月でジャンプ','歯みがき','焼き肉パーティー','回転寿司','バレンタイン','ハロウィン',
+  '桃太郎','雷様','人魚','ドラゴン','天使','鬼','雪合戦','かき氷','スイカ割り','こたつで寝る猫',
+  '自撮りする人','行列のできるラーメン屋','ゲームに夢中な人','筋トレする人','サーフィン','スキー','花見','満月','虹','台風',
+  '新幹線','消防車','救急車','ヘリコプター','潜水艦','灯台','観覧車','動物園','水族館','病院',
+  '先生に怒られる','初デート','結婚式','引っ越し','風邪をひいた人','ダイエット中の人','財布をなくした人','寝ぐせ','くしゃみ','しゃっくり'];
+const OE_COLORS = ['#1f2233','#ff4d4d','#3b82f6','#22c55e','#facc15','#a16207','#f472b6','#ffffff'];
+const OE_SIZES = [8, 18, 40];
+
+function oeDraw(canvas, strokes){
+  if (!canvas) return;
+  const g = canvas.getContext('2d'), W = canvas.width, s = W / 1000;
+  g.fillStyle = '#fff'; g.fillRect(0, 0, W, W);
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  (strokes || []).forEach(st => oeStroke(g, st, s));
+}
+function oeStroke(g, st, s, from){
+  if (!st || !Array.isArray(st.p) || st.p.length < 2) return;
+  g.strokeStyle = OE_COLORS[st.c] || '#000'; g.lineWidth = (st.w || 10) * s;
+  const p = st.p;
+  g.beginPath();
+  const start = from ? Math.max(0, from - 2) : 0;
+  g.moveTo(p[start] * s, p[start + 1] * s);
+  if (p.length === 2) g.lineTo(p[0] * s + 0.01, p[1] * s);
+  for (let i = start + 2; i < p.length; i += 2) g.lineTo(p[i] * s, p[i + 1] * s);
+  g.stroke();
+}
+const validStrokes = v => Array.isArray(v) && v.length <= 600 && v.every(s => s && Array.isArray(s.p) && s.p.length <= 4000);
+
+const OE = {
+  id: 'oekaki', prefix: 'minna-oekaki-v1-', title: 'お絵かき伝言ゲーム', emoji: '🎨', minPlayers: 3, maxPlayers: 10, hasScores: false,
+  tagline: 'お題 → 絵 → 言葉 → 絵…と伝言して、<br>最後にどう変わったかをみんなで見て笑うゲーム',
+  rules: `<ol>
+    <li>はじめに、全員がお題を書きます（ランダムモードならアプリが出します）。</li>
+    <li>となりの人に回ってきたお題を、<b>絵だけで</b>描きます。</li>
+    <li>次の人は、その絵を見て「何の絵か」を言葉で書きます。</li>
+    <li>絵 → 言葉 → 絵…と全員に回ったら、最初のお題がどう変わったかを順番に発表！</li>
+  </ol>
+  <div class="score">勝ち負けはありません。みんなで盛り上がろう！</div>`,
+  defaultCfg: () => ({ mode: 'custom', time: 90 }),
+  roundLabel: G => G.ph === 'chain' ? `${G.s.step + 1} / ${G.pl.length} 周目` : '',
+  settingsView(G){
+    const c = G.cfg;
+    return `<div class="sec-title">最初のお題</div>
+      ${Party.modeButtons('oe-mode', c.mode, [['custom','✏️','みんなで書く','最初に全員がお題を考えます'],['random','🎲','ランダム','アプリがお題を出します（すぐ絵から始まる）']])}
+      <div class="sec-title">絵を描く制限時間</div>
+      ${Party.segButtons('oe-time', c.time, [[60,'60秒'],[90,'90秒'],[120,'120秒'],[0,'なし']])}`;
+  },
+  settingsSummary(G){
+    const c = G.cfg;
+    return `お題：<b style="color:var(--text)">${c.mode === 'custom' ? '✏️ みんなで書く' : '🎲 ランダム'}</b>　／　描く時間：<b style="color:var(--text)">${c.time ? c.time + '秒' : 'なし'}</b>`;
+  },
+  stepType: (G, s) => (G.cfg.mode === 'custom' ? (s % 2 === 0 ? 't' : 'd') : (s % 2 === 0 ? 'd' : 't')),
+  stepTime(G, s){
+    if (!G.cfg.time) return 0;
+    if (OE.stepType(G, s) === 'd') return G.cfg.time;
+    return s === 0 ? 60 : 45;
+  },
+  onStart(G){
+    const n = G.pl.length;
+    G.ph = 'chain';
+    G.s = { step: 0, deadline: 0, prompts: G.cfg.mode === 'random' ? shuffle(OE_PROMPTS).slice(0, n) : null, rv: null };
+    const t = OE.stepTime(G, 0); G.s.deadline = t ? Date.now() + t * 1000 : 0;
+  },
+  submitted(c, i, s){ const pr = c.playerPres(i); return !!(pr && pr['e' + s] && pr['e' + s].r === c.G.gid); },
+  fold(G, c){
+    const n = G.pl.length;
+    if (G.ph === 'chain') {
+      const s = G.s.step;
+      const active = G.pl.map((_, i) => i).filter(i => c.present.has(G.pl[i].p));
+      const allIn = active.every(i => OE.submitted(c, i, s));
+      const overdue = G.s.deadline && Date.now() > G.s.deadline + 5000;
+      if (allIn || overdue) {
+        G.s.step++;
+        if (G.s.step >= n) { G.ph = 'reveal'; G.s.rv = { c: 0, i: 0 }; G.s.deadline = 0; }
+        else { const t = OE.stepTime(G, G.s.step); G.s.deadline = t ? Date.now() + t * 1000 : 0; }
+      }
+    }
+    if (G.ph === 'reveal' && G.s.rv && !G.s.rvDone) {
+      const owner = G.s.rv.c;
+      const pr = c.playerPres(owner);
+      const q = pr && pr.rvq && pr.rvq.r === G.gid ? pr.rvq : null;
+      if (q) { const nx = OE.nextRv(G, G.s.rv); if (!nx && q.done) G.s.rvDone = true; else if (nx && q.c === nx.c && q.i === nx.i) OE.applyRv(G, nx); }
+    }
+  },
+  nextRv(G, rv){ const n = G.pl.length; if (rv.i < n - 1 + (G.cfg.mode === 'random' ? 1 : 0)) return { c: rv.c, i: rv.i + 1 }; if (rv.c < n - 1) return { c: rv.c + 1, i: 0 }; return null; },
+  applyRv(G, nx){ G.s.rv = nx; },
+  /* chain c: item list = [prompt?] + entries at steps 0..n-1, step s written by (c+s)%n */
+  chainItems(G, c, cache){
+    const n = G.pl.length, items = [];
+    if (G.cfg.mode === 'random') items.push({ who: null, k: 't', v: G.s.prompts[c], prompt: true });
+    for (let s = 0; s < n; s++) {
+      const a = (c + s) % n, e = (cache[a] || {})[s];
+      items.push({ who: a, s, k: e ? e.k : OE.stepType(G, s), v: e ? e.v : null });
+    }
+    return items;
+  },
+  prevItem(G, me, s, cache){
+    const n = G.pl.length, c = (me - s + n * 10) % n;
+    if (s === 0) return G.cfg.mode === 'random' ? { k: 't', v: G.s.prompts[c] } : null;
+    const a = (c + s - 1) % n, e = (cache[a] || {})[s - 1];
+    return e ? { k: e.k, v: e.v } : { k: OE.stepType(G, s - 1), v: null };
+  },
+  effects(c){
+    const G = c.G, ui = c.ui;
+    if (!ui.cache || ui.cacheGid !== G.gid) { ui.cache = {}; ui.cacheGid = G.gid; }
+    G.pl.forEach((pl, i) => {
+      const pr = c.playerPres(i); if (!pr) return;
+      for (let s = 0; s < G.pl.length; s++) {
+        const e = pr['e' + s];
+        if (e && e.r === G.gid && (e.k === 't' ? typeof e.v === 'string' : validStrokes(e.v))) { (ui.cache[i] = ui.cache[i] || {})[s] = { k: e.k, v: e.k === 't' ? cleanStr(e.v, 40) : e.v }; }
+      }
+    });
+    // restore my own entries after a reload
+    const mine = lsGet('minna-oekaki-mine');
+    if (mine && mine.gid === G.gid && c.myIdx >= 0 && mine.n === G.pl[c.myIdx].n) {
+      const patch = {};
+      Object.keys(mine.e || {}).forEach(k => { if (!(c.my[k] && c.my[k].r === G.gid)) patch[k] = mine.e[k]; });
+      if (Object.keys(patch).length) c.setP(patch);
+    }
+    if (G.ph === 'chain') {
+      const key = G.gid + '-' + G.s.step;
+      if (ui.drawKey !== key) { ui.drawKey = key; ui.strokes = []; ui.text = ''; }
+    }
+  },
+  submit(c, auto){
+    const G = c.G, s = G.s.step, me = c.myIdx;
+    if (me < 0 || OE.submitted(c, me, s)) return;
+    const k = OE.stepType(G, s);
+    let v;
+    if (k === 't') {
+      const inp = document.getElementById('oe-text');
+      v = cleanStr(inp ? inp.value : (c.ui.text || ''), 30);
+      if (!v) { if (!auto) { const er = document.getElementById('oe-err'); if (er) er.textContent = '入力してください'; return; } v = '（時間切れ）'; }
+    } else {
+      v = c.ui.strokes || [];
+      if (!v.length && !auto) { const er = document.getElementById('oe-err'); if (er) er.textContent = '何か描いてね！'; return; }
+    }
+    const entry = { r: G.gid, k, v };
+    c.setP({ ['e' + s]: entry });
+    const mine = lsGet('minna-oekaki-mine');
+    const store = mine && mine.gid === G.gid && mine.n === G.pl[me].n ? mine : { gid: G.gid, n: G.pl[me].n, e: {} };
+    store.e['e' + s] = entry; lsSet('minna-oekaki-mine', store);
+    if (c.isGM) c.gm(() => {}); else c.render();
+    window.scrollTo(0, 0);
+  },
+  onTick(c){
+    const G = c.G;
+    if (G.ph === 'chain' && G.s.deadline && Date.now() >= G.s.deadline && c.myIdx >= 0 && !OE.submitted(c, c.myIdx, G.s.step)) OE.submit(c, true);
+    if (c.isGM && G.ph === 'chain' && G.s.deadline && Date.now() > G.s.deadline + 5000) c.gm(() => {});
+  },
+  /* ---- drawing canvas (kept alive across re-renders) ---- */
+  getCanvas(c){
+    const ui = c.ui;
+    if (ui.canvas) return ui.canvas;
+    const cv = document.createElement('canvas');
+    cv.className = 'oe-canvas'; cv.width = 800; cv.height = 800;
+    let cur = null;
+    const pos = e => { const r = cv.getBoundingClientRect(); return [Math.round((e.clientX - r.left) / r.width * 1000), Math.round((e.clientY - r.top) / r.height * 1000)]; };
+    cv.addEventListener('pointerdown', e => {
+      e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch(_) {}
+      const [x, y] = pos(e);
+      cur = { c: ui.color || 0, w: OE_SIZES[ui.size ?? 1], p: [x, y] };
+      ui.strokes.push(cur);
+      oeStroke(cv.getContext('2d'), cur, cv.width / 1000);
+    });
+    cv.addEventListener('pointermove', e => {
+      if (!cur) return; e.preventDefault();
+      const [x, y] = pos(e), p = cur.p;
+      if (Math.abs(x - p[p.length - 2]) + Math.abs(y - p[p.length - 1]) < 5) return;
+      p.push(Math.max(0, Math.min(1000, x)), Math.max(0, Math.min(1000, y)));
+      oeStroke(cv.getContext('2d'), cur, cv.width / 1000, p.length - 2);
+    });
+    const end = () => { cur = null; };
+    cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end); cv.addEventListener('pointerleave', end);
+    ui.canvas = cv;
+    return cv;
+  },
+  afterRender(c){
+    const slot = document.getElementById('oe-slot');
+    if (slot) {
+      const cv = OE.getCanvas(c);
+      if (cv.parentNode !== slot) { slot.appendChild(cv); }
+      if (c.ui.canvasKey !== c.ui.drawKey) { c.ui.canvasKey = c.ui.drawKey; }
+      oeDraw(cv, c.ui.strokes);
+    }
+    document.querySelectorAll('canvas[data-draw]').forEach(cv => {
+      const [a, s] = cv.dataset.draw.split('-').map(Number);
+      const e = ((c.ui.cache || {})[a] || {})[s];
+      oeDraw(cv, e && e.k === 'd' ? e.v : []);
+    });
+  },
+  itemHtml(G, it, cache, idx){
+    const who = it.who == null ? '🎲 お題' : esc(G.pl[it.who].n);
+    if (it.k === 't') return `<div class="oe-item"><div class="oe-who">${who}${it.prompt ? '' : ' が書いた'}</div>
+      <div class="oe-text">${it.v ? esc(it.v) : '<span class="mute">（なし）</span>'}</div></div>`;
+    return `<div class="oe-item"><div class="oe-who">${who} が描いた</div>
+      ${it.v ? `<canvas class="oe-view" width="500" height="500" data-draw="${it.who}-${it.s}"></canvas>` : '<div class="oe-text mute">（なし）</div>'}</div>`;
+  },
+  view(c){
+    const G = c.G, n = G.pl.length, me = c.myIdx;
+    const cache = c.ui.cache || {};
+    if (G.ph === 'chain') {
+      const s = G.s.step, k = OE.stepType(G, s);
+      const done = me < 0 || OE.submitted(c, me, s);
+      const timer = G.s.deadline ? `<div class="oe-timer">⏱ ${Party.deadlineSpan(G.s.deadline)}</div>` : '';
+      if (!done) {
+        const prev = OE.prevItem(G, me, s, cache);
+        if (k === 't' && !prev) {
+          return `${timer}<div class="center"><span class="host-tag">✏️ お題を書こう</span></div>
+            <p class="center mute small mt8">となりの人がこれを絵にします。描くのが楽しそうなお題がおすすめ！</p>
+            <input class="field mt16" id="oe-text" data-keep maxlength="30" placeholder="例：空を飛ぶペンギン" autocomplete="off">
+            <button class="addbtn mt8" data-a="oe-randPrompt">🎲 おまかせ</button>
+            <p id="oe-err" class="small mt8" style="color:var(--S);min-height:18px"></p>
+            <div class="grow"></div><button class="btn mt16" data-a="oe-submit">決定</button>`;
+        }
+        if (k === 't') {
+          return `${timer}<div class="center"><span class="host-tag">🔍 これは何の絵？</span></div>
+            ${prev.v ? `<canvas class="oe-view mt12" width="500" height="500" data-draw="${(((me - s + n * 10) % n) + s - 1) % n}-${s - 1}"></canvas>` : '<div class="card mt12 center mute">（絵が届きませんでした。自由に書いてね）</div>'}
+            <input class="field mt12" id="oe-text" data-keep maxlength="30" placeholder="見たままを言葉で！" autocomplete="off">
+            <p id="oe-err" class="small mt8" style="color:var(--S);min-height:18px"></p>
+            <div class="grow"></div><button class="btn mt8" data-a="oe-submit">決定</button>`;
+        }
+        const color = c.ui.color || 0, size = c.ui.size ?? 1;
+        return `${timer}<div class="oe-prompt"><span class="small mute">お題</span><b>${prev && prev.v ? esc(prev.v) : '（自由に描いてね）'}</b></div>
+          <div id="oe-slot" class="oe-slot"></div>
+          <div class="oe-tools">
+            <div class="oe-colors">${OE_COLORS.map((col, i) => `<button class="oe-col ${color === i ? 'on' : ''}" style="background:${col}" data-a="oe-color" data-v="${i}" aria-label="${i === 7 ? '消しゴム' : '色'}">${i === 7 ? '🧽' : ''}</button>`).join('')}</div>
+            <div class="oe-sizes">${OE_SIZES.map((sz, i) => `<button class="oe-size ${size === i ? 'on' : ''}" data-a="oe-size" data-v="${i}"><i style="width:${6 + i * 6}px;height:${6 + i * 6}px"></i></button>`).join('')}
+              <button class="oe-size" data-a="oe-undo">↩︎</button><button class="oe-size" data-a="oe-clear">🗑</button></div>
+          </div>
+          <p id="oe-err" class="small" style="color:var(--S);min-height:18px"></p>
+          <button class="btn" data-a="oe-submit">できた！</button>`;
+      }
+      return `${timer}${Party.waitBlock(me < 0 ? '観戦中' : '提出しました！', 'みんなが終わるのを待っています')}
+        ${Party.memberList(G, (pl, i) => OE.submitted(c, i, s) ? { t: '✓ できた', ok: true } : { t: k === 'd' ? '🎨 描いてる…' : '✏️ 書いてる…' })}`;
+    }
+    if (G.ph === 'reveal') {
+      const viewC = G.s.rvDone && c.ui.viewC != null ? c.ui.viewC : G.s.rv.c;
+      const items = OE.chainItems(G, viewC, cache);
+      const upto = G.s.rvDone || viewC !== G.s.rv.c ? items.length - 1 : G.s.rv.i;
+      const canDrive = !G.s.rvDone && (c.isGM || me === G.s.rv.c);
+      const nx = OE.nextRv(G, G.s.rv);
+      const first = items[0], last = items[items.length - 1];
+      return `<div class="center"><span class="host-tag">📜 ${esc(G.pl[viewC].n)}さんのお題の伝言</span></div>
+        ${G.s.rvDone ? `<div class="chips center" style="justify-content:center">${G.pl.map((pl, i) => `<button class="chip ${i === viewC ? 'on' : ''}" data-a="oe-viewC" data-v="${i}">${esc(pl.n)}</button>`).join('')}</div>` : ''}
+        <div class="oe-chain mt12">${items.slice(0, upto + 1).map((it, idx) => OE.itemHtml(G, it, cache, idx)).join('<div class="oe-arrow">↓</div>')}</div>
+        ${upto === items.length - 1 && first.k === 't' && last.k === 't' ? `<div class="talk mt12">「${esc(first.v || '？')}」が<br>「${esc(last.v || '？')}」に！</div>` : ''}
+        <div class="grow"></div>
+        ${G.s.rvDone ? (c.isGM ? `<button class="btn mt24" data-a="p-again">同じメンバーでもう一度</button>` : `<p class="mute center mt24">ホストの操作を待っています</p>`)
+          : canDrive ? `<button class="btn mt24" data-a="oe-next">${nx ? (nx.c !== G.s.rv.c ? '次の人の伝言へ ▶' : '次を見る ▼') : 'おわり！'}</button>`
+          : `<p class="mute center mt24">${esc(G.pl[G.s.rv.c].n)}さん${c.isGM ? '' : 'かホスト'}がめくるのを待っています</p>`}`;
+    }
+    return '';
+  },
+  actions: {
+    'oe-mode': (el, c) => c.gm(G => { G.cfg.mode = el.dataset.v; }),
+    'oe-time': (el, c) => c.gm(G => { G.cfg.time = +el.dataset.v; }),
+    'oe-randPrompt': () => { const el = document.getElementById('oe-text'); if (el) el.value = pick(OE_PROMPTS); },
+    'oe-submit': (el, c) => OE.submit(c, false),
+    'oe-color': (el, c) => { c.ui.color = +el.dataset.v; if (c.ui.color === 7 && (c.ui.size ?? 1) < 2) c.ui.size = 2; c.render(); },
+    'oe-size': (el, c) => { c.ui.size = +el.dataset.v; c.render(); },
+    'oe-undo': (el, c) => { (c.ui.strokes || []).pop(); oeDraw(c.ui.canvas, c.ui.strokes); },
+    'oe-clear': (el, c) => { c.ui.strokes = []; oeDraw(c.ui.canvas, c.ui.strokes); },
+    'oe-next': (el, c) => {
+      const G = c.G, nx = OE.nextRv(G, G.s.rv);
+      if (!nx) { c.gm(g => { g.s.rvDone = true; }); if (!c.isGM) c.setP({ rvq: { r: G.gid, c: -1, i: -1, done: true } }); return; }
+      if (c.isGM) c.gm(g => OE.applyRv(g, nx)); else c.setP({ rvq: { r: G.gid, c: nx.c, i: nx.i } });
+      setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 250);
+    },
+    'oe-viewC': (el, c) => { c.ui.viewC = +el.dataset.v; c.render(); }
+  }
+};
+Party.start(OE);
+
+</script>
+</body>
+</html>
