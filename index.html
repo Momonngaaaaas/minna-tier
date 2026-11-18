@@ -9,7 +9,7 @@
 <title>みんなでパーティー</title>
 <meta name="description" content="スマホのブラウザで、ログインなしで遊べるパーティーゲーム集。">
 <meta property="og:title" content="みんなでパーティー">
-<meta property="og:description" content="ティア表・NGワード・お絵かき伝言・せーので一致。URLを開いて部屋番号を入れるだけ。">
+<meta property="og:description" content="ティア表・NGワード・お絵かきしりとり・せーので一致。URLを開いて部屋番号を入れるだけ。">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎉</text></svg>">
 <style>
   :root{
@@ -243,6 +243,20 @@
   .game-card b{display:block;font-size:19px}
   .game-card small{display:block;color:var(--mute);font-size:12px;margin-top:3px;line-height:1.5}
   .game-card .pp{font-size:11px;color:#d0c3ff;margin-top:4px;font-weight:800}
+  /* shiritori */
+  .sr-hint{background:#ffd43b1a;color:var(--B);border-radius:12px;padding:10px 12px;text-align:center;font-weight:800}
+  .sr-hint b{font-size:22px}
+  .sr-guess{font-size:13px;font-weight:700;margin-bottom:8px;color:var(--mute)}
+  .sr-guess.ok{color:var(--good)} .sr-guess.ng{color:#ffa8a8}
+  .sr-guess b{color:var(--text)}
+  .sr-ans{font-size:18px;text-align:center;margin-top:8px}
+  .sr-ans b{font-size:24px}
+  .sr-link{font-size:13px;font-weight:800;text-align:center;margin-top:4px}
+  .sr-link.ok{color:var(--good)} .sr-link.ng{color:#ffa8a8}
+  .sr-score{font-size:18px;font-weight:800;margin-top:6px}
+  .sr-score b{font-size:28px;color:var(--B)}
+
+  .oe-small{max-width:min(240px,62vw)}
 </style>
 </head>
 <body>
@@ -250,7 +264,7 @@
   <div class="logo" style="margin:26px 0 8px"><div class="pre">みんなで</div><div class="main" style="font-size:40px">パーティー🎉</div></div>
   <p class="center mute small">スマホのブラウザで、ログインなしで遊べるゲーム集。<br>部屋を作って、部屋番号をみんなに伝えるだけ！</p>
   <div class="mt24">
-  <a class="game-card" href="tier.html"><span class="ge">📊</span><span><b>みんなでティア表</b><small>主役が作ったティア表の並び順を当てる価値観ゲーム</small><span class="pp">2人〜／1台でもOK</span></span></a><a class="game-card" href="ng.html"><span class="ge">🙊</span><span><b>NGワードゲーム</b><small>自分のNGワードだけ見えない！うっかり言ったらアウトの会話ゲーム</small><span class="pp">3人〜／通話しながら</span></span></a><a class="game-card" href="oekaki.html"><span class="ge">🎨</span><span><b>お絵かき伝言ゲーム</b><small>お題→絵→言葉→絵…と伝言して、最後にどう変わったかを見て笑う</small><span class="pp">3人〜</span></span></a><a class="game-card" href="itchi.html"><span class="ge">🤝</span><span><b>せーので一致ゲーム</b><small>お題にこっそり答えて、みんなとそろったら得点</small><span class="pp">2人〜</span></span></a>
+  <a class="game-card" href="tier.html"><span class="ge">📊</span><span><b>みんなでティア表</b><small>主役が作ったティア表の並び順を当てる価値観ゲーム</small><span class="pp">2人〜／1台でもOK</span></span></a><a class="game-card" href="ng.html"><span class="ge">🙊</span><span><b>NGワードゲーム</b><small>自分のNGワードだけ見えない！うっかり言ったらアウトの会話ゲーム</small><span class="pp">3人〜／通話しながら</span></span></a><a class="game-card" href="oekaki.html"><span class="ge">🎨</span><span><b>お絵かきしりとり</b><small>言葉は使わず、絵だけでしりとり！最後に答え合わせしてつながったか確認</small><span class="pp">2人〜</span></span></a><a class="game-card" href="itchi.html"><span class="ge">🤝</span><span><b>せーので一致ゲーム</b><small>お題にこっそり答えて、みんなとそろったら得点</small><span class="pp">2人〜</span></span></a>
   </div>
   <div class="hint mt16">遊び方：1人が「部屋を作る」→ 出てきた4桁の部屋番号を、ほかの人が入力して参加。<br>離れて遊ぶときは、LINEなどの通話をつなぎながら遊ぶのがおすすめです。</div>
 </div>

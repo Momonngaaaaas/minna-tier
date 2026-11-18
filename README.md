@@ -6,7 +6,7 @@
 |---|---|
 | 📊 みんなでティア表（tier.html） | 2人〜（1台モードあり） |
 | 🙊 NGワードゲーム（ng.html） | 3人〜 |
-| 🎨 お絵かき伝言ゲーム（oekaki.html） | 3人〜 |
+| 🎨 お絵かきしりとり（oekaki.html） | 2人〜 |
 | 🤝 せーので一致ゲーム（itchi.html） | 2人〜 |
 
 スマホどうしは WebRTC（[PeerJS](https://peerjs.com/)）で直接つながります。最初の接続には PeerJS の公開サーバーを使います。

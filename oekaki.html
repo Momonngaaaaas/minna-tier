@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#15172b">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap" rel="stylesheet">
-<title>お絵かき伝言ゲーム｜みんなでパーティー</title>
-<meta name="description" content="お題を絵と言葉で伝言していくゲーム。スマホのブラウザで、ログインなしでみんなで遊べます。">
+<title>お絵かきしりとり｜みんなでパーティー</title>
+<meta name="description" content="言葉を使わず絵だけでしりとりするゲーム。スマホのブラウザで、ログインなしでみんなで遊べます。">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>">
 <style>
   :root{
@@ -241,6 +241,20 @@
   .game-card b{display:block;font-size:19px}
   .game-card small{display:block;color:var(--mute);font-size:12px;margin-top:3px;line-height:1.5}
   .game-card .pp{font-size:11px;color:#d0c3ff;margin-top:4px;font-weight:800}
+  /* shiritori */
+  .sr-hint{background:#ffd43b1a;color:var(--B);border-radius:12px;padding:10px 12px;text-align:center;font-weight:800}
+  .sr-hint b{font-size:22px}
+  .sr-guess{font-size:13px;font-weight:700;margin-bottom:8px;color:var(--mute)}
+  .sr-guess.ok{color:var(--good)} .sr-guess.ng{color:#ffa8a8}
+  .sr-guess b{color:var(--text)}
+  .sr-ans{font-size:18px;text-align:center;margin-top:8px}
+  .sr-ans b{font-size:24px}
+  .sr-link{font-size:13px;font-weight:800;text-align:center;margin-top:4px}
+  .sr-link.ok{color:var(--good)} .sr-link.ng{color:#ffa8a8}
+  .sr-score{font-size:18px;font-weight:800;margin-top:6px}
+  .sr-score b{font-size:28px;color:var(--B)}
+
+  .oe-small{max-width:min(240px,62vw)}
 </style>
 </head>
 <body>
@@ -714,15 +728,6 @@ const Party = (() => {
   return { start, ctx, render, memberList, finalBlock, waitBlock, deadlineSpan, segButtons, modeButtons, confirm, rankList, O };
 })();
 
-const OE_PROMPTS = ['空を飛ぶペンギン','ラーメンを食べる猫','雪だるま','サンタクロース','宇宙人','お化け屋敷','忍者','ロボット','恐竜の散歩','海賊船',
-  'ハンバーガー','誕生日ケーキ','満員電車','花火大会','おばあちゃんの家','寝坊した朝','運動会','温泉に入るサル','王様','魔法使い',
-  'キャンプファイヤー','ジェットコースター','サッカーの試合','カラオケ','ピラミッド','富士山','東京タワー','雨の日の通学','逆立ちするゾウ','踊るブロッコリー',
-  '怒っているお母さん','授業中の居眠り','冷蔵庫をあさる人','虫歯','宝くじが当たった人','迷子の子ども','スーパーヒーロー','タコの料理人','ゾンビ','UFO',
-  '自転車に乗るクマ','パンダの赤ちゃん','カブトムシ','バナナの皮ですべる人','月でジャンプ','歯みがき','焼き肉パーティー','回転寿司','バレンタイン','ハロウィン',
-  '桃太郎','雷様','人魚','ドラゴン','天使','鬼','雪合戦','かき氷','スイカ割り','こたつで寝る猫',
-  '自撮りする人','行列のできるラーメン屋','ゲームに夢中な人','筋トレする人','サーフィン','スキー','花見','満月','虹','台風',
-  '新幹線','消防車','救急車','ヘリコプター','潜水艦','灯台','観覧車','動物園','水族館','病院',
-  '先生に怒られる','初デート','結婚式','引っ越し','風邪をひいた人','ダイエット中の人','財布をなくした人','寝ぐせ','くしゃみ','しゃっくり'];
 const OE_COLORS = ['#1f2233','#ff4d4d','#3b82f6','#22c55e','#facc15','#a16207','#f472b6','#ffffff'];
 const OE_SIZES = [8, 18, 40];
 
@@ -736,6 +741,7 @@ function oeDraw(canvas, strokes){
 function oeStroke(g, st, s, from){
   if (!st || !Array.isArray(st.p) || st.p.length < 2) return;
   g.strokeStyle = OE_COLORS[st.c] || '#000'; g.lineWidth = (st.w || 10) * s;
+  g.lineCap = 'round'; g.lineJoin = 'round';
   const p = st.p;
   g.beginPath();
   const start = from ? Math.max(0, from - 2) : 0;
@@ -746,129 +752,141 @@ function oeStroke(g, st, s, from){
 }
 const validStrokes = v => Array.isArray(v) && v.length <= 600 && v.every(s => s && Array.isArray(s.p) && s.p.length <= 4000);
 
+/* ---- しりとり helpers ---- */
+const SMALL = {'ぁ':'あ','ぃ':'い','ぅ':'う','ぇ':'え','ぉ':'お','ゃ':'や','ゅ':'ゆ','ょ':'よ','っ':'つ','ゎ':'わ','ゕ':'か','ゖ':'け'};
+const VOWEL_OF = {};
+['あかさたなはまやらわがざだばぱゃぁ','いきしちにひみりぎじぢびぴぃ','うくすつぬふむゆるぐずづぶぷゅぅゔ','えけせてねへめれげぜでべぺぇ','おこそとのほもよろをごぞどぼぽょぉ']
+  .forEach((row, i) => [...row].forEach(ch => { VOWEL_OF[ch] = 'あいうえお'[i]; }));
+function kana(s){
+  return String(s || '').normalize('NFKC')
+    .replace(/[ァ-ヶ]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60))
+    .replace(/[\s・、。,.!！?？~〜「」『』（）()]/g, '');
+}
+const isKana = s => /^[ぁ-ゖー]+$/.test(s);
+const plain = ch => (SMALL[ch] || ch).normalize('NFD').replace(/[゙゚]/g, '').normalize('NFC');
+function lastChar(word){
+  const w = kana(word); if (!w) return '';
+  let i = w.length - 1;
+  if (w[i] === 'ー') { while (i > 0 && w[i] === 'ー') i--; return VOWEL_OF[w[i]] || plain(w[i]); }
+  return plain(w[i]);
+}
+const firstChar = word => { const w = kana(word); return w ? plain(w[0]) : ''; };
+const START_WORD = 'しりとり';
+
 const OE = {
-  id: 'oekaki', prefix: 'minna-oekaki-v1-', title: 'お絵かき伝言ゲーム', emoji: '🎨', minPlayers: 3, maxPlayers: 10, hasScores: false,
-  tagline: 'お題 → 絵 → 言葉 → 絵…と伝言して、<br>最後にどう変わったかをみんなで見て笑うゲーム',
+  id: 'shiritori', prefix: 'minna-shiritori-v1-', title: 'お絵かきしりとり', emoji: '🎨', minPlayers: 2, maxPlayers: 10, hasScores: false,
+  tagline: '言葉は使わず、絵だけでしりとり！<br>最後に答え合わせして、ちゃんとつながったかな？',
+  callHint: '通話しながらでもOK。ただし答えは声に出さないでね！',
   rules: `<ol>
-    <li>はじめに、全員がお題を書きます（ランダムモードならアプリが出します）。</li>
-    <li>となりの人に回ってきたお題を、<b>絵だけで</b>描きます。</li>
-    <li>次の人は、その絵を見て「何の絵か」を言葉で書きます。</li>
-    <li>絵 → 言葉 → 絵…と全員に回ったら、最初のお題がどう変わったかを順番に発表！</li>
+    <li>1人ずつ順番に絵を描きます。描いている絵は、ほかの人もリアルタイムで見られます。</li>
+    <li>自分の番が来たら、前の人の絵が<b>何か</b>を考えて、その言葉の<b>最後の文字から始まるもの</b>を描きます。</li>
+    <li>答えは声に出しちゃダメ！ 描いたものの名前は、こっそりひらがなで入力します。</li>
+    <li>全員描き終わったら、1枚ずつ答え合わせ。しりとりが最後までつながったら大成功！</li>
   </ol>
-  <div class="score">勝ち負けはありません。みんなで盛り上がろう！</div>`,
-  defaultCfg: () => ({ mode: 'custom', time: 90 }),
-  roundLabel: G => G.ph === 'chain' ? `${G.s.step + 1} / ${G.pl.length} 周目` : '',
+  <div class="score">最初の言葉は「しりとり」。なので最初の人は「り」から始まるものを描きます。<br>濁点・半濁点は気にせずつなげてOK（「は」→「ば」もOK）。</div>`,
+  defaultCfg: () => ({ laps: 1, time: 90 }),
+  roundLabel: G => G.ph === 'draw' ? `${G.s.turn + 1} / ${G.s.order.length} 枚目` : '',
   settingsView(G){
-    const c = G.cfg;
-    return `<div class="sec-title">最初のお題</div>
-      ${Party.modeButtons('oe-mode', c.mode, [['custom','✏️','みんなで書く','最初に全員がお題を考えます'],['random','🎲','ランダム','アプリがお題を出します（すぐ絵から始まる）']])}
-      <div class="sec-title">絵を描く制限時間</div>
+    const c = G.cfg, n = Math.max(G.pl.length, 1);
+    return `<div class="sec-title">1人が描く回数</div>
+      ${Party.segButtons('oe-laps', c.laps, [[1,'1回'],[2,'2回'],[3,'3回']])}
+      <p class="mute small mt8">全部で${n * c.laps}枚の絵でしりとりします</p>
+      <div class="sec-title">1枚を描く制限時間</div>
       ${Party.segButtons('oe-time', c.time, [[60,'60秒'],[90,'90秒'],[120,'120秒'],[0,'なし']])}`;
   },
   settingsSummary(G){
     const c = G.cfg;
-    return `お題：<b style="color:var(--text)">${c.mode === 'custom' ? '✏️ みんなで書く' : '🎲 ランダム'}</b>　／　描く時間：<b style="color:var(--text)">${c.time ? c.time + '秒' : 'なし'}</b>`;
-  },
-  stepType: (G, s) => (G.cfg.mode === 'custom' ? (s % 2 === 0 ? 't' : 'd') : (s % 2 === 0 ? 'd' : 't')),
-  stepTime(G, s){
-    if (!G.cfg.time) return 0;
-    if (OE.stepType(G, s) === 'd') return G.cfg.time;
-    return s === 0 ? 60 : 45;
+    return `1人 <b style="color:var(--text)">${c.laps}回</b> 描く　／　制限時間：<b style="color:var(--text)">${c.time ? c.time + '秒' : 'なし'}</b>`;
   },
   onStart(G){
-    const n = G.pl.length;
-    G.ph = 'chain';
-    G.s = { step: 0, deadline: 0, prompts: G.cfg.mode === 'random' ? shuffle(OE_PROMPTS).slice(0, n) : null, rv: null };
-    const t = OE.stepTime(G, 0); G.s.deadline = t ? Date.now() + t * 1000 : 0;
+    const base = shuffle(G.pl.map((_, i) => i)), order = [];
+    for (let l = 0; l < G.cfg.laps; l++) order.push(...base);
+    G.ph = 'draw';
+    G.s = { order, turn: 0, deadline: G.cfg.time ? Date.now() + G.cfg.time * 1000 : 0, rv: -1, skipped: [] };
   },
-  submitted(c, i, s){ const pr = c.playerPres(i); return !!(pr && pr['e' + s] && pr['e' + s].r === c.G.gid); },
+  drawer: G => G.s.order[G.s.turn],
+  entryKey: t => 'e' + t,
+  entry(c, t){ return ((c.ui.cache || {})[t]) || null; },
   fold(G, c){
-    const n = G.pl.length;
-    if (G.ph === 'chain') {
-      const s = G.s.step;
-      const active = G.pl.map((_, i) => i).filter(i => c.present.has(G.pl[i].p));
-      const allIn = active.every(i => OE.submitted(c, i, s));
-      const overdue = G.s.deadline && Date.now() > G.s.deadline + 5000;
-      if (allIn || overdue) {
-        G.s.step++;
-        if (G.s.step >= n) { G.ph = 'reveal'; G.s.rv = { c: 0, i: 0 }; G.s.deadline = 0; }
-        else { const t = OE.stepTime(G, G.s.step); G.s.deadline = t ? Date.now() + t * 1000 : 0; }
-      }
-    }
-    if (G.ph === 'reveal' && G.s.rv && !G.s.rvDone) {
-      const owner = G.s.rv.c;
-      const pr = c.playerPres(owner);
-      const q = pr && pr.rvq && pr.rvq.r === G.gid ? pr.rvq : null;
-      if (q) { const nx = OE.nextRv(G, G.s.rv); if (!nx && q.done) G.s.rvDone = true; else if (nx && q.c === nx.c && q.i === nx.i) OE.applyRv(G, nx); }
-    }
+    if (G.ph !== 'draw') return;
+    const t = G.s.turn, d = OE.drawer(G);
+    const pr = c.playerPres(d);
+    const e = pr && pr[OE.entryKey(t)];
+    const overdue = G.s.deadline && Date.now() > G.s.deadline + 6000;
+    if ((e && e.r === G.gid) || overdue) OE.advance(G, !(e && e.r === G.gid));
   },
-  nextRv(G, rv){ const n = G.pl.length; if (rv.i < n - 1 + (G.cfg.mode === 'random' ? 1 : 0)) return { c: rv.c, i: rv.i + 1 }; if (rv.c < n - 1) return { c: rv.c + 1, i: 0 }; return null; },
-  applyRv(G, nx){ G.s.rv = nx; },
-  /* chain c: item list = [prompt?] + entries at steps 0..n-1, step s written by (c+s)%n */
-  chainItems(G, c, cache){
-    const n = G.pl.length, items = [];
-    if (G.cfg.mode === 'random') items.push({ who: null, k: 't', v: G.s.prompts[c], prompt: true });
-    for (let s = 0; s < n; s++) {
-      const a = (c + s) % n, e = (cache[a] || {})[s];
-      items.push({ who: a, s, k: e ? e.k : OE.stepType(G, s), v: e ? e.v : null });
-    }
-    return items;
-  },
-  prevItem(G, me, s, cache){
-    const n = G.pl.length, c = (me - s + n * 10) % n;
-    if (s === 0) return G.cfg.mode === 'random' ? { k: 't', v: G.s.prompts[c] } : null;
-    const a = (c + s - 1) % n, e = (cache[a] || {})[s - 1];
-    return e ? { k: e.k, v: e.v } : { k: OE.stepType(G, s - 1), v: null };
+  advance(G, skipped){
+    if (skipped) G.s.skipped.push(G.s.turn);
+    G.s.turn++;
+    if (G.s.turn >= G.s.order.length) { G.ph = 'reveal'; G.s.rv = 0; G.s.deadline = 0; }
+    else G.s.deadline = G.cfg.time ? Date.now() + G.cfg.time * 1000 : 0;
   },
   effects(c){
     const G = c.G, ui = c.ui;
     if (!ui.cache || ui.cacheGid !== G.gid) { ui.cache = {}; ui.cacheGid = G.gid; }
-    G.pl.forEach((pl, i) => {
-      const pr = c.playerPres(i); if (!pr) return;
-      for (let s = 0; s < G.pl.length; s++) {
-        const e = pr['e' + s];
-        if (e && e.r === G.gid && (e.k === 't' ? typeof e.v === 'string' : validStrokes(e.v))) { (ui.cache[i] = ui.cache[i] || {})[s] = { k: e.k, v: e.k === 't' ? cleanStr(e.v, 40) : e.v }; }
-      }
+    (G.s.order || []).forEach((p, t) => {
+      const pr = c.playerPres(p); if (!pr) return;
+      const e = pr[OE.entryKey(t)];
+      if (e && e.r === G.gid && validStrokes(e.v)) ui.cache[t] = { v: e.v, g: cleanStr(e.g, 20), a: cleanStr(e.a, 20) };
     });
-    // restore my own entries after a reload
-    const mine = lsGet('minna-oekaki-mine');
+    const mine = lsGet('minna-shiritori-mine');
     if (mine && mine.gid === G.gid && c.myIdx >= 0 && mine.n === G.pl[c.myIdx].n) {
       const patch = {};
       Object.keys(mine.e || {}).forEach(k => { if (!(c.my[k] && c.my[k].r === G.gid)) patch[k] = mine.e[k]; });
       if (Object.keys(patch).length) c.setP(patch);
     }
-    if (G.ph === 'chain') {
-      const key = G.gid + '-' + G.s.step;
-      if (ui.drawKey !== key) { ui.drawKey = key; ui.strokes = []; ui.text = ''; }
+    if (G.ph === 'draw') {
+      const key = G.gid + '-' + G.s.turn;
+      if (ui.drawKey !== key) { ui.drawKey = key; ui.strokes = []; if (c.my.lv) c.setP({ lv: null }); }
     }
   },
+  prevAnswerOf(c, t){ if (t === 0) return START_WORD; const e = OE.entry(c, t - 1); return e ? e.a : ''; },
   submit(c, auto){
-    const G = c.G, s = G.s.step, me = c.myIdx;
-    if (me < 0 || OE.submitted(c, me, s)) return;
-    const k = OE.stepType(G, s);
-    let v;
-    if (k === 't') {
-      const inp = document.getElementById('oe-text');
-      v = cleanStr(inp ? inp.value : (c.ui.text || ''), 30);
-      if (!v) { if (!auto) { const er = document.getElementById('oe-err'); if (er) er.textContent = '入力してください'; return; } v = '（時間切れ）'; }
-    } else {
-      v = c.ui.strokes || [];
-      if (!v.length && !auto) { const er = document.getElementById('oe-err'); if (er) er.textContent = '何か描いてね！'; return; }
-    }
-    const entry = { r: G.gid, k, v };
-    c.setP({ ['e' + s]: entry });
-    const mine = lsGet('minna-oekaki-mine');
-    const store = mine && mine.gid === G.gid && mine.n === G.pl[me].n ? mine : { gid: G.gid, n: G.pl[me].n, e: {} };
-    store.e['e' + s] = entry; lsSet('minna-oekaki-mine', store);
+    const G = c.G, t = G.s.turn;
+    if (G.ph !== 'draw' || OE.drawer(G) !== c.myIdx) return;
+    const gEl = document.getElementById('oe-guess'), aEl = document.getElementById('oe-ans'), er = document.getElementById('oe-err');
+    let guess = t === 0 ? START_WORD : kana(gEl ? gEl.value : '');
+    let ans = kana(aEl ? aEl.value : '');
+    const strokes = c.ui.strokes || [];
+    if (!auto) {
+      const msg = t > 0 && !guess ? '前の絵が何だと思ったか入力してね'
+        : t > 0 && !isKana(guess) ? '前の絵の答えは、ひらがなで入力してね'
+        : !strokes.length ? '絵を描いてね！'
+        : !ans ? '描いたものの名前を入力してね'
+        : !isKana(ans) ? '描いたものの名前は、ひらがなで入力してね' : '';
+      if (msg) { if (er) er.textContent = msg; return; }
+    } else { guess = guess || '？'; ans = ans || '？'; }
+    const entry = { r: G.gid, v: strokes, g: guess.slice(0, 20), a: ans.slice(0, 20) };
+    c.setP({ [OE.entryKey(t)]: entry, lv: null });
+    const mine = lsGet('minna-shiritori-mine');
+    const store = mine && mine.gid === G.gid && mine.n === G.pl[c.myIdx].n ? mine : { gid: G.gid, n: G.pl[c.myIdx].n, e: {} };
+    store.e[OE.entryKey(t)] = entry; lsSet('minna-shiritori-mine', store);
     if (c.isGM) c.gm(() => {}); else c.render();
     window.scrollTo(0, 0);
   },
+  publishLive(c){
+    const ui = c.ui; clearTimeout(ui.liveTimer);
+    ui.liveTimer = setTimeout(() => { const G = Party.O.G; if (G && G.ph === 'draw') c.setP({ lv: { r: G.gid + '-' + G.s.turn, v: ui.strokes } }); }, 250);
+  },
   onTick(c){
     const G = c.G;
-    if (G.ph === 'chain' && G.s.deadline && Date.now() >= G.s.deadline && c.myIdx >= 0 && !OE.submitted(c, c.myIdx, G.s.step)) OE.submit(c, true);
-    if (c.isGM && G.ph === 'chain' && G.s.deadline && Date.now() > G.s.deadline + 5000) c.gm(() => {});
+    if (G.ph === 'draw' && G.s.deadline && Date.now() >= G.s.deadline && OE.drawer(G) === c.myIdx && c.ui.autoSent !== G.gid + '-' + G.s.turn) {
+      c.ui.autoSent = G.gid + '-' + G.s.turn; OE.submit(c, true);
+    }
+    if (c.isGM && G.ph === 'draw' && G.s.deadline && Date.now() > G.s.deadline + 6000) c.gm(() => {});
   },
-  /* ---- drawing canvas (kept alive across re-renders) ---- */
+  updateHint(c){
+    const el = document.getElementById('oe-hint'); if (!el) return;
+    const t = c.G.s.turn;
+    const g = t === 0 ? START_WORD : kana((document.getElementById('oe-guess') || {}).value || '');
+    const ch = g ? lastChar(g) : '';
+    el.innerHTML = ch ? `「<b>${esc(ch)}</b>」から始まるものを描こう！` : '前の絵が何かを考えて、上に入力してね';
+    const a = kana((document.getElementById('oe-ans') || {}).value || '');
+    const warn = document.getElementById('oe-warn');
+    if (warn) warn.textContent = a && ch && firstChar(a) !== ch ? `⚠️「${ch}」から始まっていないみたい` : a && lastChar(a) === 'ん' ? '⚠️「ん」で終わってるよ！' : '';
+  },
+  onInput(e, c){ if (e.target.id === 'oe-guess' || e.target.id === 'oe-ans') OE.updateHint(c); },
+  /* ---- canvas (kept alive across re-renders) ---- */
   getCanvas(c){
     const ui = c.ui;
     if (ui.canvas) return ui.canvas;
@@ -890,7 +908,7 @@ const OE = {
       p.push(Math.max(0, Math.min(1000, x)), Math.max(0, Math.min(1000, y)));
       oeStroke(cv.getContext('2d'), cur, cv.width / 1000, p.length - 2);
     });
-    const end = () => { cur = null; };
+    const end = () => { if (cur) { cur = null; OE.publishLive(Party.ctx()); } };
     cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end); cv.addEventListener('pointerleave', end);
     ui.canvas = cv;
     return cv;
@@ -899,96 +917,113 @@ const OE = {
     const slot = document.getElementById('oe-slot');
     if (slot) {
       const cv = OE.getCanvas(c);
-      if (cv.parentNode !== slot) { slot.appendChild(cv); }
-      if (c.ui.canvasKey !== c.ui.drawKey) { c.ui.canvasKey = c.ui.drawKey; }
+      if (cv.parentNode !== slot) slot.appendChild(cv);
       oeDraw(cv, c.ui.strokes);
     }
-    document.querySelectorAll('canvas[data-draw]').forEach(cv => {
-      const [a, s] = cv.dataset.draw.split('-').map(Number);
-      const e = ((c.ui.cache || {})[a] || {})[s];
-      oeDraw(cv, e && e.k === 'd' ? e.v : []);
-    });
+    document.querySelectorAll('canvas[data-draw]').forEach(cv => { const e = OE.entry(c, +cv.dataset.draw); oeDraw(cv, e ? e.v : []); });
+    const live = document.querySelector('canvas[data-live]');
+    if (live) {
+      const G = c.G, pr = c.playerPres(OE.drawer(G));
+      const lv = pr && pr.lv && pr.lv.r === G.gid + '-' + G.s.turn && validStrokes(pr.lv.v) ? pr.lv.v : [];
+      oeDraw(live, lv);
+    }
+    OE.updateHint(c);
   },
-  itemHtml(G, it, cache, idx){
-    const who = it.who == null ? '🎲 お題' : esc(G.pl[it.who].n);
-    if (it.k === 't') return `<div class="oe-item"><div class="oe-who">${who}${it.prompt ? '' : ' が書いた'}</div>
-      <div class="oe-text">${it.v ? esc(it.v) : '<span class="mute">（なし）</span>'}</div></div>`;
-    return `<div class="oe-item"><div class="oe-who">${who} が描いた</div>
-      ${it.v ? `<canvas class="oe-view" width="500" height="500" data-draw="${it.who}-${it.s}"></canvas>` : '<div class="oe-text mute">（なし）</div>'}</div>`;
+  tools(c){
+    const color = c.ui.color || 0, size = c.ui.size ?? 1;
+    return `<div class="oe-tools">
+      <div class="oe-colors">${OE_COLORS.map((col, i) => `<button class="oe-col ${color === i ? 'on' : ''}" style="background:${col}" data-a="oe-color" data-v="${i}" aria-label="${i === 7 ? '消しゴム' : '色'}">${i === 7 ? '🧽' : ''}</button>`).join('')}</div>
+      <div class="oe-sizes">${OE_SIZES.map((sz, i) => `<button class="oe-size ${size === i ? 'on' : ''}" data-a="oe-size" data-v="${i}"><i style="width:${6 + i * 6}px;height:${6 + i * 6}px"></i></button>`).join('')}
+        <button class="oe-size" data-a="oe-undo">↩︎</button><button class="oe-size" data-a="oe-clear">🗑</button></div>
+    </div>`;
+  },
+  judge(c, t){
+    const e = OE.entry(c, t), prevAns = OE.prevAnswerOf(c, t);
+    const guess = t === 0 ? START_WORD : (e ? e.g : '');
+    const ans = e ? e.a : '';
+    const guessOk = t === 0 ? null : !!(guess && prevAns && guess !== '？' && kana(guess) === kana(prevAns));
+    const from = lastChar(guess && guess !== '？' ? guess : prevAns);
+    const linkOk = !!(ans && ans !== '？' && firstChar(ans) === from);
+    const endN = !!(ans && lastChar(ans) === 'ん');
+    return { e, prevAns, guess, ans, guessOk, from, linkOk, endN };
+  },
+  revealCard(c, t){
+    const G = c.G, who = G.pl[G.s.order[t]], j = OE.judge(c, t);
+    const skipped = G.s.skipped.includes(t);
+    return `<div class="oe-item">
+      <div class="oe-who">${t + 1}枚目　${esc(who ? who.n : '?')}</div>
+      ${t > 0 ? `<div class="sr-guess ${j.guessOk ? 'ok' : 'ng'}">前の絵を「<b>${esc(j.guess || '？')}</b>」だと思った ${j.guessOk ? '⭕ 正解！' : `❌（正解は「${esc(j.prevAns || '？')}」）`}</div>` : `<div class="sr-guess">最初の言葉「しりとり」から</div>`}
+      ${skipped || !j.e ? `<div class="oe-text mute">（描けませんでした）</div>` : `<canvas class="oe-view" width="500" height="500" data-draw="${t}"></canvas>`}
+      <div class="sr-ans">答え：<b>${esc(j.ans || '？')}</b></div>
+      <div class="sr-link ${j.linkOk && !j.endN ? 'ok' : 'ng'}">${j.linkOk ? `「${esc(j.from)}」→「${esc(firstChar(j.ans))}」 つながった！` : `「${esc(j.from || '？')}」から始まってない…`}${j.endN ? '　💥「ん」で終わった！' : ''}</div>
+    </div>`;
   },
   view(c){
-    const G = c.G, n = G.pl.length, me = c.myIdx;
-    const cache = c.ui.cache || {};
-    if (G.ph === 'chain') {
-      const s = G.s.step, k = OE.stepType(G, s);
-      const done = me < 0 || OE.submitted(c, me, s);
-      const timer = G.s.deadline ? `<div class="oe-timer">⏱ ${Party.deadlineSpan(G.s.deadline)}</div>` : '';
-      if (!done) {
-        const prev = OE.prevItem(G, me, s, cache);
-        if (k === 't' && !prev) {
-          return `${timer}<div class="center"><span class="host-tag">✏️ お題を書こう</span></div>
-            <p class="center mute small mt8">となりの人がこれを絵にします。描くのが楽しそうなお題がおすすめ！</p>
-            <input class="field mt16" id="oe-text" data-keep maxlength="30" placeholder="例：空を飛ぶペンギン" autocomplete="off">
-            <button class="addbtn mt8" data-a="oe-randPrompt">🎲 おまかせ</button>
-            <p id="oe-err" class="small mt8" style="color:var(--S);min-height:18px"></p>
-            <div class="grow"></div><button class="btn mt16" data-a="oe-submit">決定</button>`;
-        }
-        if (k === 't') {
-          return `${timer}<div class="center"><span class="host-tag">🔍 これは何の絵？</span></div>
-            ${prev.v ? `<canvas class="oe-view mt12" width="500" height="500" data-draw="${(((me - s + n * 10) % n) + s - 1) % n}-${s - 1}"></canvas>` : '<div class="card mt12 center mute">（絵が届きませんでした。自由に書いてね）</div>'}
-            <input class="field mt12" id="oe-text" data-keep maxlength="30" placeholder="見たままを言葉で！" autocomplete="off">
-            <p id="oe-err" class="small mt8" style="color:var(--S);min-height:18px"></p>
-            <div class="grow"></div><button class="btn mt8" data-a="oe-submit">決定</button>`;
-        }
-        const color = c.ui.color || 0, size = c.ui.size ?? 1;
-        return `${timer}<div class="oe-prompt"><span class="small mute">お題</span><b>${prev && prev.v ? esc(prev.v) : '（自由に描いてね）'}</b></div>
-          <div id="oe-slot" class="oe-slot"></div>
-          <div class="oe-tools">
-            <div class="oe-colors">${OE_COLORS.map((col, i) => `<button class="oe-col ${color === i ? 'on' : ''}" style="background:${col}" data-a="oe-color" data-v="${i}" aria-label="${i === 7 ? '消しゴム' : '色'}">${i === 7 ? '🧽' : ''}</button>`).join('')}</div>
-            <div class="oe-sizes">${OE_SIZES.map((sz, i) => `<button class="oe-size ${size === i ? 'on' : ''}" data-a="oe-size" data-v="${i}"><i style="width:${6 + i * 6}px;height:${6 + i * 6}px"></i></button>`).join('')}
-              <button class="oe-size" data-a="oe-undo">↩︎</button><button class="oe-size" data-a="oe-clear">🗑</button></div>
-          </div>
+    const G = c.G, me = c.myIdx, t = G.s.turn;
+    if (G.ph === 'draw') {
+      const d = OE.drawer(G), timer = G.s.deadline ? `<div class="oe-timer">⏱ ${Party.deadlineSpan(G.s.deadline)}</div>` : '';
+      const prevImg = t > 0 ? (OE.entry(c, t - 1) ? `<canvas class="oe-view oe-small" width="500" height="500" data-draw="${t - 1}"></canvas>` : `<div class="card center mute">（前の絵が届いていません）</div>`) : '';
+      if (d === me) {
+        return `${timer}<div class="center"><span class="host-tag">🎨 あなたの番！</span></div>
+          ${t === 0 ? `<div class="card mt12 center"><div class="odai-label">最初の言葉</div><div class="odai">しりとり</div></div>`
+            : `<div class="sec-title">前の人の絵（${esc(G.pl[G.s.order[t - 1]].n)}さん）</div>${prevImg}
+              <input class="field mt12" id="oe-guess" data-keep maxlength="20" placeholder="この絵は何？（ひらがなで）" autocomplete="off">`}
+          <div class="sr-hint mt12" id="oe-hint"></div>
+          <div id="oe-slot" class="oe-slot mt8"></div>
+          ${OE.tools(c)}
+          <input class="field mt12" id="oe-ans" data-keep maxlength="20" placeholder="描いたものの名前（ひらがなで・ひみつ）" autocomplete="off">
+          <p id="oe-warn" class="small mt8" style="color:var(--B);min-height:16px"></p>
           <p id="oe-err" class="small" style="color:var(--S);min-height:18px"></p>
-          <button class="btn" data-a="oe-submit">できた！</button>`;
+          <button class="btn" data-a="oe-submit">できた！ 次の人へ</button>`;
       }
-      return `${timer}${Party.waitBlock(me < 0 ? '観戦中' : '提出しました！', 'みんなが終わるのを待っています')}
-        ${Party.memberList(G, (pl, i) => OE.submitted(c, i, s) ? { t: '✓ できた', ok: true } : { t: k === 'd' ? '🎨 描いてる…' : '✏️ 書いてる…' })}`;
+      const next = t + 1 < G.s.order.length ? G.pl[G.s.order[t + 1]] : null;
+      const meNext = next && G.s.order[t + 1] === me;
+      return `${timer}<div class="center"><span class="host-tag">✏️ ${esc(G.pl[d].n)}さんが描いています</span></div>
+        <canvas class="oe-view mt12" width="500" height="500" data-live="1"></canvas>
+        ${meNext ? `<div class="talk mt12">次はあなたの番！<br>この絵が何か考えておこう（声に出しちゃダメ！）</div>`
+          : `<p class="mute small center mt12">${next ? `次は ${esc(next.n)}さん` : 'これが最後の1枚！'}　／　答えは声に出さないでね🤫</p>`}
+        ${t > 0 ? `<details class="rules"><summary>前の絵を見る</summary><div class="mt8">${prevImg}</div></details>` : ''}`;
     }
     if (G.ph === 'reveal') {
-      const viewC = G.s.rvDone && c.ui.viewC != null ? c.ui.viewC : G.s.rv.c;
-      const items = OE.chainItems(G, viewC, cache);
-      const upto = G.s.rvDone || viewC !== G.s.rv.c ? items.length - 1 : G.s.rv.i;
-      const canDrive = !G.s.rvDone && (c.isGM || me === G.s.rv.c);
-      const nx = OE.nextRv(G, G.s.rv);
-      const first = items[0], last = items[items.length - 1];
-      return `<div class="center"><span class="host-tag">📜 ${esc(G.pl[viewC].n)}さんのお題の伝言</span></div>
-        ${G.s.rvDone ? `<div class="chips center" style="justify-content:center">${G.pl.map((pl, i) => `<button class="chip ${i === viewC ? 'on' : ''}" data-a="oe-viewC" data-v="${i}">${esc(pl.n)}</button>`).join('')}</div>` : ''}
-        <div class="oe-chain mt12">${items.slice(0, upto + 1).map((it, idx) => OE.itemHtml(G, it, cache, idx)).join('<div class="oe-arrow">↓</div>')}</div>
-        ${upto === items.length - 1 && first.k === 't' && last.k === 't' ? `<div class="talk mt12">「${esc(first.v || '？')}」が<br>「${esc(last.v || '？')}」に！</div>` : ''}
+      const T = G.s.order.length, rv = G.s.rv, done = rv >= T;
+      const cards = [];
+      for (let i = 0; i < Math.min(rv + 1, T); i++) cards.push(OE.revealCard(c, i));
+      let summary = '';
+      if (done) {
+        let links = 0, hits = 0;
+        for (let i = 0; i < T; i++) { const j = OE.judge(c, i); if (j.linkOk && !j.endN) links++; if (j.guessOk) hits++; }
+        const chain = [START_WORD].concat(G.s.order.map((_, i) => (OE.entry(c, i) || {}).a || '？'));
+        summary = `<div class="card mt16 center"><div class="odai-label">結果</div>
+          <div class="sr-score">しりとり <b>${links}</b> / ${T} つながった</div>
+          ${T > 1 ? `<div class="sr-score">絵が伝わった <b>${hits}</b> / ${T - 1}</div>` : ''}
+          <div class="small mute mt8" style="line-height:1.8">${chain.map(esc).join(' → ')}</div>
+          ${links === T && hits === T - 1 ? '<div class="talk mt12">🎉 パーフェクト！最後までつながった！</div>' : ''}</div>`;
+      }
+      return `<div class="center"><span class="host-tag">📜 答え合わせ</span></div>
+        <div class="oe-chain mt12">${cards.join('<div class="oe-arrow">↓</div>')}</div>
+        ${summary}
         <div class="grow"></div>
-        ${G.s.rvDone ? (c.isGM ? `<button class="btn mt24" data-a="p-again">同じメンバーでもう一度</button>` : `<p class="mute center mt24">ホストの操作を待っています</p>`)
-          : canDrive ? `<button class="btn mt24" data-a="oe-next">${nx ? (nx.c !== G.s.rv.c ? '次の人の伝言へ ▶' : '次を見る ▼') : 'おわり！'}</button>`
-          : `<p class="mute center mt24">${esc(G.pl[G.s.rv.c].n)}さん${c.isGM ? '' : 'かホスト'}がめくるのを待っています</p>`}`;
+        ${done ? (c.isGM ? `<button class="btn mt24" data-a="p-again">同じメンバーでもう一度</button>` : `<p class="mute center mt24">ホストの操作を待っています</p>`)
+          : c.isGM ? `<button class="btn mt24" data-a="oe-next">${rv + 1 >= T ? '結果を見る 🏁' : '次の絵へ ▼'}</button>`
+          : `<p class="mute center mt24">ホストがめくるのを待っています</p>`}`;
     }
     return '';
   },
   actions: {
-    'oe-mode': (el, c) => c.gm(G => { G.cfg.mode = el.dataset.v; }),
+    'oe-laps': (el, c) => c.gm(G => { G.cfg.laps = +el.dataset.v; }),
     'oe-time': (el, c) => c.gm(G => { G.cfg.time = +el.dataset.v; }),
-    'oe-randPrompt': () => { const el = document.getElementById('oe-text'); if (el) el.value = pick(OE_PROMPTS); },
     'oe-submit': (el, c) => OE.submit(c, false),
     'oe-color': (el, c) => { c.ui.color = +el.dataset.v; if (c.ui.color === 7 && (c.ui.size ?? 1) < 2) c.ui.size = 2; c.render(); },
     'oe-size': (el, c) => { c.ui.size = +el.dataset.v; c.render(); },
-    'oe-undo': (el, c) => { (c.ui.strokes || []).pop(); oeDraw(c.ui.canvas, c.ui.strokes); },
-    'oe-clear': (el, c) => { c.ui.strokes = []; oeDraw(c.ui.canvas, c.ui.strokes); },
+    'oe-undo': (el, c) => { (c.ui.strokes || []).pop(); oeDraw(c.ui.canvas, c.ui.strokes); OE.publishLive(c); },
+    'oe-clear': (el, c) => { c.ui.strokes = []; oeDraw(c.ui.canvas, c.ui.strokes); OE.publishLive(c); },
     'oe-next': (el, c) => {
-      const G = c.G, nx = OE.nextRv(G, G.s.rv);
-      if (!nx) { c.gm(g => { g.s.rvDone = true; }); if (!c.isGM) c.setP({ rvq: { r: G.gid, c: -1, i: -1, done: true } }); return; }
-      if (c.isGM) c.gm(g => OE.applyRv(g, nx)); else c.setP({ rvq: { r: G.gid, c: nx.c, i: nx.i } });
+      c.gm(G => { if (G.ph === 'reveal') G.s.rv = Math.min(G.s.order.length, G.s.rv + 1); });
       setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 250);
     },
-    'oe-viewC': (el, c) => { c.ui.viewC = +el.dataset.v; c.render(); }
-  }
+    'oe-skip': (el, c) => c.gm(G => { if (G.ph === 'draw') OE.advance(G, true); })
+  },
+  gmMenu(c){ return c.G.ph === 'draw' ? `<button class="btn sub mt12" data-a="oe-skip">今の人の番をとばす</button>` : ''; }
 };
 Party.start(OE);
 
